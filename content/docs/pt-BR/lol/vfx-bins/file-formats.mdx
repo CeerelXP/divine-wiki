@@ -1,0 +1,165 @@
+---
+title: "File Formats/formato do arquivo"
+description: "Modding de League of Legends envolve trabalhar com alguns tipos principais de arquivos. Dominar esses três formatos já te permite editar praticamente qualquer coisa no jogo."
+category: "vfx-bins"
+---
+
+## Referência rápida
+
+| Arquivo | O que é                 | Editar / Converter com                                                                                              |
+| -------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `.bin`   | Dados de lógica e config | [Jade](/docs/lol/tools/modding-apps/jade) ou [Ritobin](/docs/lol/tools/modding-apps/ritobin)                       |
+| `.dds`   | Formato padrão de textura | Edição direta                                                                                                       |
+| `.tex`   | Formato de textura da Riot | Plugin TEX, [Flint](/docs/lol/tools/modding-apps/flint) ou LtMAO                                                  |
+
+---
+
+### Tipos de arquivo
+
+<Tabs items={[".bin Files", ".dds Files", ".tex Files"]}>
+<Tab value=".bin Files">
+
+## .bin: Dados e lógica
+
+Arquivos `.bin` armazenam **toda a lógica** do League: sistemas de partículas, definições de skins, animações, sons e muito mais.
+
+| Contém           | Exemplos                    |
+| ---------------- | -------------------------- |
+| Dados de partículas | cores, tamanho, timing   |
+| Definições de skin | caminhos de modelo e textura |
+| Config de animação | nomes e blending          |
+| Config de som     | triggers de áudio e volume |
+
+### Fluxo de trabalho
+
+1. Extrair `.bin` usando [Flint](/docs/lol/tools/modding-apps/flint)
+2. Converter para `.py` usando [Ritobin](/docs/lol/tools/modding-apps/ritobin) (ou editar direto no [Jade](/docs/lol/tools/modding-apps/jade))
+3. Editar em um editor de texto como VS Code ou Notepad++
+4. Converter de volta para `.bin`
+5. Adicionar ao mod
+
+> 💡 Arquivos `.py` são legíveis. Dá para pesquisar e editar facilmente.
+
+</Tab>
+
+<Tab value=".dds Files">
+
+## .dds: Texturas
+
+`.dds` (DirectDraw Surface) é o **formato padrão de texturas** usado para:
+
+| Uso            | Exemplos                  |
+| -------------- | ------------------------ |
+| Modelos de campeão | skins, rostos         |
+| Partículas     | sprites de VFX, brilhos |
+| UI/HUD         | ícones e painéis        |
+
+### Ferramentas de edição
+
+<ToolCard name="Photoshop" href="https://www.adobe.com/products/photoshop.html">
+  Melhor opção com plugin DDS da NVIDIA.
+</ToolCard>
+
+<ToolCard name="GIMP" href="https://www.gimp.org/">
+  Alternativa gratuita com suporte a DDS.
+</ToolCard>
+
+<ToolCard name="Paint.NET" href="https://www.getpaint.net/">
+  Leve e com plugin DDS.
+</ToolCard>
+
+### Configurações de exportação
+
+| Configuração | Valor         |
+| ------------ | ------------- |
+| Formato      | `.dds`        |
+| Compressão   | **BC3 / DXT5** |
+| Mipmaps      | ✅ Ativado     |
+
+> ⚠️ Compressão errada = textura quebrada no jogo!
+
+</Tab>
+
+<Tab value=".tex Files">
+
+## .tex: Formato da Riot
+
+`.tex` é o formato proprietário da Riot encontrado em arquivos `.wad.client`.
+
+| Status                | Informação                 |
+| --------------------- | -------------------------- |
+| ❌ Não edita direto   | É um formato compilado     |
+| ✅ Precisa converter  | Usar tex2dds              |
+| ✅ Converter de volta | Antes de reimportar        |
+
+Você tem duas formas de trabalhar com `.tex`:
+
+1. Abrir diretamente com um plugin TEX no seu editor de imagem. Sem conversão.
+2. Converter `.tex` ↔ `.dds` usando Flint ou LtMAO.
+
+<ToolCard
+  name="RitoTex (Photoshop)"
+  href="/docs/lol/tools/texturing/photoshop-tex-plugin"
+>
+  Abre e salva `.tex` e `.dds` direto no Photoshop. Sem conversão.
+</ToolCard>
+
+<ToolCard
+  name="Paint.NET Tex Plugin"
+  href="/docs/lol/tools/texturing/paint-net-tex-plugin"
+>
+  Abre e salva `.tex` no Paint.NET.
+</ToolCard>
+
+<ToolCard
+  name="GIMP Tex Plugin"
+  href="/docs/lol/tools/texturing/gimp-tex-plugin"
+>
+  Abre e salva `.tex` no GIMP.
+</ToolCard>
+
+<ToolCard name="Flint" href="/docs/lol/tools/modding-apps/flint">
+  Converte `.tex` ↔ `.dds`, além de extração e empacotamento completo.
+</ToolCard>
+
+<ToolCard name="tex2dds (LtMAO)" href="/docs/lol/tools/modding-apps/ltmao">
+  Conversão por clique direito `.tex` ↔ `.dds`. Alternativa legada.
+</ToolCard>
+
+> 💡 Sempre mantenha o `.tex` original como backup antes de converter.
+
+</Tab>
+</Tabs>
+
+---
+
+## Fluxo completo
+
+| Tarefa               | Arquivo | Ferramenta                         | Saída           |
+| -------------------- | ------- | ---------------------------------- | --------------- |
+| Editar VFX/partículas | `.bin`  | Jade (ou Ritobin)                  | `.bin`          |
+| Editar skin          | `.dds`  | Photoshop/GIMP                     | `.dds`          |
+| Editar textura direto | `.tex`  | RitoTex, Paint.NET ou GIMP plugin | `.tex`          |
+| Converter textura    | `.tex`  | Flint ou LtMAO                    | `.dds`          |
+| Reimportar textura   | `.dds`  | Flint ou LtMAO                    | `.tex`          |
+| Explorar arquivos do jogo | `.wad` | Flint                          | arquivos extraídos |
+
+---
+
+## Ferramentas essenciais
+
+<ToolCard name="Jade" href="/docs/lol/tools/modding-apps/jade">
+  Editor visual de BIN. Sem necessidade de conversão.
+</ToolCard>
+
+<ToolCard name="Ritobin" href="/docs/lol/tools/modding-apps/ritobin">
+  Converte `.bin` para `.py` para edição.
+</ToolCard>
+
+<ToolCard name="LtMAO" href="/docs/lol/tools/modding-apps/ltmao">
+  Converte `.tex` para `.dds` para texturas.
+</ToolCard>
+
+<ToolCard name="Flint" href="/docs/lol/tools/modding-apps/flint">
+  Extrai arquivos de `.wad.client`.
+</ToolCard>

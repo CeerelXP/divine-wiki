@@ -1,3 +1,188 @@
 {
-  "displayName": "Português (Brasil)"
+  "displayName": "Português (Brasil)",
+
+  "nav": {
+    "title": "Divine Skins Wiki",
+    "documentation": "guias",
+    "contribute": "Contribuir",
+    "discord": "Discord",
+    "search": "pesquisar por guias"
+  },
+
+  "settings": {
+    "trigger": "configuração de aparencia",
+    "mode": "Modo",
+    "modeLight": "claro",
+    "modeDark": "escuro",
+    "modeSystem": "Sistema",
+    "style": "estilo",
+    "styleDivine": "Divine",
+    "styleMinimal": "minimo",
+    "font": "Fonte",
+    "fontSystem": "sistema de fontes",
+    "width": "tamanho/largura",
+    "widthWide": "cheia",
+    "widthCentered": "centralizado"
+  },
+
+  "home": {
+    "title": "fazer custom skins para liga das lendas (rito gomes ficar feliz c:)",
+    "tagline": "Guias, ferramentas, e o processo dos criadores da Divine Skins.",
+    "searchPlaceholder": "Pesquisar por guias, ferramentas, e topicos…",
+    "browseHeading": "navegar pelo guia",
+    "browseSubheading": "cada topico we cover, dividido em portais. pegue uma lane para entrar de cabeça (IA e foda).",
+    "featuredHeading": "começe com isto",
+    "communityHeading": "e tudo escrito pela comunidade",
+    "communitySubheading": "cada pagina possui um edit no Github. se viu algo de errado? So arrumar. se sabe de algo que a gente não sabe? escreva ai meu nobre.",
+    "ctaStart": "começa aqui",
+    "ctaBrowse": "pesquisar por guias",
+    "ctaContribute": "escrever um guia",
+    "joinDiscord": "se junte ao Divine Discord",
+    "tracksHeading": "pegue uma lane",
+    "tracksSubheading": "tres dos guias mais pesquisados.",
+    "trackWalkthroughTitle": "guia passo a passo",
+    "trackWalkthroughDesc": "se e noob em programa 3D? começe com o passo a passo de um cenario de maya vazio para um preparado kid bengala jr.",
+    "trackMayaTitle": "Maya workflow",
+    "trackMayaDesc": "troca de meshas (mesh swap), rigging, tintura de peso (weight paint), e exporta para os modos em que criadores da divine realmente façam.",
+    "trackVfxTitle": "VFX & bins",
+    "trackVfxDesc": "edição de bin, trabalhar com particulas, e pegar efeitos sem travar o client (se ta ligado lol ta no beta)."
+  },
+
+  "misc": {
+    "loading": "Carregando...",
+    "failedToLoad": "Falha no carregamento.",
+    "gitInfoUnavailable": "informações do git indisponivel",
+    "credit": "Escrito por",
+    "madeBy": "Feito por",
+    "lastUpdated": "Ultima atualização",
+    "editOnGithub": "Editar no GitHub"
+  },
+
+  "meta": {
+    "guided-walkthrough": {
+      "title": "inicio rapido"
+    },
+    "tools": {
+      "title": "ferramentas"
+    },
+    "maya": {
+      "title": "Maya"
+    },
+    "blender": {
+      "title": "Blender"
+    },
+    "contributing": {
+      "title": "contribuir"
+    },
+    "animations": {
+      "title": "animações"
+    },
+    "vfx-bins": {
+      "title": "VFX & bins"
+    },
+    "assets-library": {
+      "title": "biblioteca dos apps"
+    },
+    "sound": {
+      "title": "mudar o som"
+    },
+    "errors": {
+      "title": "erros e como consertar"
+    },
+    "lol": {
+      "title": "League of Legends/liga das lendas"
+    }
+  },
+
+  "callout": {
+    "defaultTitles": {
+      "info": "Info",
+      "warning": "Avisos",
+      "danger": "Perigo",
+      "success": "Sucesso",
+      "lvl_beginner": "Level: Principiante",
+      "lvl_intermediate": "Level: Intermediario",
+      "lvl_advanced": "Level: Avançado (esse bicho e foda)"
+    }
+  },
+
+  "draft": {
+    "newTitle": "Escrever um guia",
+    "editTitle": "Editar o guia",
+    "fieldTitle": "Titulo",
+    "fieldTitlePlaceholder": "De um nome pro seu guia",
+    "fieldCategory": "Categoria",
+    "fieldDescription": "Descrição",
+    "fieldDescriptionPlaceholder": "1 sentenca, tem 160 personagens (riot ta me trollando). exibir no guia e nas previas.",
+    "fieldSlug": "nome do arquivo",
+    "fieldDiscord": "Discord usuario por credito",
+    "fieldDiscordPlaceholder": "Discord (opcional)",
+    "fieldGithub": "GitHub usuario for credit",
+    "fieldGithubPlaceholder": "GitHub (optional)",
+    "bodyPlaceholder": "começe a escrever. Use a barra de ferramentas acima para dropar em componentes. bota o @ para redimensionar para outro link.",
+    "previewHeading": "visualizar",
+    "previewLoading": "Pre-visualização…",
+    "previewError": "Não foi possivel visualizar",
+    "previewUnavailable": "não da para vizualizar. Seu rascunho esta seguro e voce ainda pode publicar.",
+    "contribute": "Contribuir",
+    "close": "Fechar",
+    "components": "Componentes",
+    "contributingGuide": "Guia de contribuiente",
+    "fullDocs": "Full docs",
+    "snippetLabel": "trecho",
+    "handoffHeading": "Publique o seu guia",
+    "handoffIntro": "Sei guia vai para o wiki as a pull request on GitHub. Follow the three steps. Keep this tab open until you finish.",
+    "githubUsernameLabel": "Seu nome do usuario no github (tomara que faça sentido o que eu quis falar :v)",
+    "githubUsernamePlaceholder": "seu usuario",
+    "stepForkHeading": "garfo do wiki (sei la que porra e essa)",
+    "stepForkBody": "O garfo e sua propria copia do the wiki no GitHub. Voce pode fazer apenas algumas vezes. Seu guia não foi postado ainda, segundo passo e adicionar. Quando o garfo estiver preparado, volte para esta aba. Se ja tem o garfo? pule o passo 2.",
+    "forkOnGithub": "garfo no GitHub",
+    "stepCreateHeading": "Adicione seu guia",
+    "stepCreateBody": "Isto abre um novo arquivo no seu garfo com seu guia preenchendo ( ͡° ͜ʖ ͡°).",
+    "stepCreateBodyLong": "Seu guia e longo ( ͡° ͜ʖ ͡°), então GitHub não consegue preencher a previa. Copia o seu guia primeiro. Então cole em um arquivo vazio no GitHub.",
+    "createOnGithub": "Criar um arquivo no GitHub",
+    "usernameNeeded": "Escreva no seu GitHub o seu usuario acima para desbloquear este link.",
+    "stepPrHeading": "Abrir o pedido de puxar (pull)",
+    "stepPrBody": "Commit the file on GitHub. Keep the first option, commit to main. Then come back and click the button below. GitHub shows your changes, click \"Create pull request\". We review it and publish it.",
+    "openPrOnGithub": "Abrir o pedido de puxão (pull)",
+    "maintainerPath": "Você tem permissão para escrever no repositorio do wiki?",
+    "maintainerLink": "Criar um diretorio do arquivo",
+    "handoffEditHeading": "Copiar e editar o guia",
+    "handoffEditBody": "GitHub can't pre-fill edits. Copy this, then paste it over the file on GitHub.",
+    "copyMdx": "Copiar MDX",
+    "copied": "Copiado",
+    "openGuideOnGithub": "Guia aberto no GitHub",
+    "imagesHeading": "so mais 1 passo: poste a imagem",
+    "imagesBody": "GitHub não consegue postar o arquivo de imagem para você. Envie o seu guia primeiro. Então poste these files to public/wiki-images/ in the same pull request:",
+    "imagesOutcome": "Sua imagem aparece na wiki quando você fazer um pedido e mesclado.",
+    "uploadOnGithub": "Postar no github",
+    "uploadImage": "Postar imagem",
+    "uploadImageBlurb": "Pegue um arquivo. vai mostrar uma previa e tambem e referenciado no seu guia. posta no GitHub depois de contribuir.",
+    "linkCheckHeading": "Link para outro guia?",
+    "linkCheckBody": "Esses nomes combina com os outros guias do wiki. Click para transforma ele em link.",
+    "continueToGithub": "Continuar no GitHub",
+    "editLoadError": "Não conseguiu carregar este guia. Abra diretamente no GitHub.",
+    "slugCollision": "A guide already exists at this file name. Pick a different one or you'll overwrite it.",
+    "unsavedHeading": "Você não salvou o seu rascunho",
+    "unsavedBody": "Recupere, ou faz tudo do inicio.",
+    "restore": "Recuperar rascunho",
+    "discard": "Começar do 0",
+    "saved": "Salvado",
+    "backToWiki": "Voltar pro wiki",
+    "editorLabel": "remarcação",
+    "previewLive": "ao vivo (live)",
+    "tabWrite": "escrever",
+    "previewEmptyHeading": "Seu guia sera exibido aqui",
+    "previewEmptyBody": "Começe a escrever da esquerda. A previa seria atualizada enquanto você escreve, exatamente igual a pagina de publicação.",
+    "more": "Mais ( ͡° ͜ʖ ͡°)"
+  },
+
+  "picker": {
+    "pickerHeading": "Criar um novo guia",
+    "pickerSubheading": "pegue o seu caminho. Ambos terminam com um pedido de puxar o mantenedor e juntar.",
+    "visualEditorTitle": "Editor de visual",
+    "visualEditorBody": "Escreva no navegador com a pre-visualização em tempo real (live preview). No setup. Se precisa de uma conta no GitHub para enviar.",
+    "manualGithubTitle": "Manual no GitHub",
+    "manualGithubBody": "Editar arquivos markdown (marcados) diretamente no GitHub. Ideal para grandes alterações com varias imagens."
+  }
 }

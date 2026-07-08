@@ -1,0 +1,106 @@
+---
+
+title: "Plugin LoL para Blender"
+description: "Addon para Blender que permite importar e exportar modelos, animações e objetos estáticos do League of Legends."
+category: "blender"
+---
+
+**Addon para Blender para importar e exportar modelos, animações e objetos estáticos do League of Legends.**
+
+<ToolCard
+  name="Plugin LoL para Blender"
+  href="https://github.com/RitoShark/Aventurine-League-Tools"
+>
+  Baixar no GitHub.
+</ToolCard>
+
+---
+
+## Principais Recursos
+
+| Recurso               | Descrição                                               |
+| --------------------- | ------------------------------------------------------- |
+| **SKL + SKN**         | Importar/Exportar modelos de personagens com esqueletos |
+| **ANM**               | Importar/Exportar animações                             |
+| **SCB / SCO**         | Importar/Exportar objetos estáticos                     |
+| **Limite de Ossos**   | Limita a no máximo 4 influências por vértice            |
+| **Ferramentas de UV** | Utilitários para alinhamento (snap) dos cantos das UVs  |
+| **Arrastar e Soltar** | Manipulação simples de arquivos                         |
+
+---
+
+## Requisitos
+
+| Requisito           | Detalhes                              |
+| ------------------- | ------------------------------------- |
+| Blender             | **4.0 ou superior** (somente Windows) |
+| Configuração de FPS | **30 FPS** recomendado para animações |
+
+---
+
+## Instalação
+
+1. Baixe o arquivo [`Aventurine.zip`](https://github.com/RitoShark/Aventurine-League-Tools/releases) — **Não descompacte o arquivo!**
+2. Abra o Blender → `Edit` → `Preferences` → `Add-ons` → `Install…`
+3. Selecione o arquivo `.zip` → Clique em **Install Add-on**
+4. Ative **Aventurine: League Tools**
+
+> ✅ **Verificação:** As opções de Importação/Exportação deverão aparecer no menu **File**, e a aba **Aventurine LoL** estará disponível na barra lateral (tecla `N`).
+
+---
+
+## Guia de Uso
+
+<Tabs items={["Importar", "Exportar"]}> <Tab value="Importar">
+
+### Importando Modelos
+
+1. Vá em `File → Import → LoL SKN+SKL`
+2. Selecione o arquivo `.skn` (certifique-se de que o arquivo `.skl` esteja na mesma pasta)
+3. Ajuste a escala (padrão: `0.01`) e clique em **Import**
+
+### Importando Animações
+
+1. Primeiro importe o modelo (SKL+SKN)
+2. Vá em `File → Import → LoL ANM Animation`
+3. Selecione o arquivo `.anm`
+
+</Tab>
+
+<Tab value="Exportar">
+
+### Exportando Modelos
+
+1. Selecione a **malha (mesh)** e a **armature** na viewport
+2. Vá em `File → Export → LoL SKN+SKL`
+3. Se necessário, utilize **Limit to 4 Influences** antes de exportar
+
+### Exportando Animações
+
+1. Selecione a **armature** que contém a animação
+2. Vá em `File → Export → LoL ANM Animation`
+3. Escolha o local onde o arquivo será salvo
+
+</Tab>
+</Tabs>
+
+---
+
+## Barra Lateral (LoL Tools)
+
+Pressione a tecla `N` para abrir a barra lateral e localize a aba **LoL Tools**.
+
+| Ferramenta              | Função                                     |
+| ----------------------- | ------------------------------------------ |
+| Importar/Exportar       | Atalhos para importação e exportação       |
+| Limitar a 4 Influências | Corrige os pesos dos ossos para exportação |
+| Cantos UV               | Alinha (snap) os vértices das UVs          |
+
+---
+
+## 💡 Dicas Rápidas
+
+* A escala padrão de importação é **0.01** (as unidades do League são grandes).
+* Cada vértice pode possuir no máximo **4 influências de ossos** para que a exportação funcione corretamente.
+* Sempre utilize **30 FPS** ao trabalhar com animações.
+* Mantenha os arquivos `.skl` e `.skn` na **mesma pasta**.

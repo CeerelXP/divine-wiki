@@ -1,0 +1,311 @@
+---
+title: "Material Atlas (Sem plugin)"
+description: "Este tutorial ira explicar como fazer materiais atlas manualmente. Sem plugins."
+category: "blender"
+---
+
+<LevelPill level="Intermediario" />
+
+<Callout type="info">
+  antes de começar existe outro guia para conquistar este topico
+  Mesmo porem um plugin mais rapido + melhor [here](material-atlas). So em caso em que você foi precose e não leu tudo.
+</Callout>
+Porem se:
+
+- O plugin ta quebrado e tem problemas
+- você e muito preguiçoso para atualizar o blender pro 5.xx (larga de ser preguiçoso seu corno manso)
+- Se e boco :v.
+
+Então vamos continuar.
+
+primeira coisa a fazer, que seria o material atlas? bom, o ideal que queremos e que todas as texturas fiquem em um UV so (juntar tudo de uma vez):
+
+<figure>
+  <img
+    id="img-1"
+    src="/wiki-images/j3-img-1.png"
+    alt="lista de materiais de um modelo 3D importado"
+  />
+  <figcaption>Image 1. lista de materiais de um modelo 3D importado</figcaption>
+</figure>
+
+Como você pode ver tem uma longa lista de materiais e cada uma possui uma imagem diferente com texturas diferentes. Nos vamos arrumar isto (serio e chato pra krl ficar atualizando bin por update) 1.
+
+Para fazer isto siga estes:
+
+1. Desmembre o seu mapa uv (UV unwrap pros leigos) para uma imagem vazia **usando um novo mapa uv**.
+2. Configure o cozimento da textura (aquela opção la de baking eu usei pouco o blender :v)
+3. Cozinhe sua textura em uma imagem vazia.
+4. Da uns toques finais e veja se ta tudo certin
+
+# 1 passo
+
+<Callout>
+este e provavelmente a parte mais dificil do tutorial no processo de terminar o que você iniciou porem o lado bom que você estara em 80% :D.
+
+pelo bem do nosso tutorial a gente pulara a parte dos “good UVs/UVs bons” e a gente vai forçar o blender a trabalhar, botando ele pra fazer automaticamente, porem você pode fazer manualmente o seu mapa UV (tanto faz, pior que eu odeio o automatico).
+
+</Callout>
+Primeiro de tudo, crie um novo mapa uv para segurar as novas mudanças, para fazer isso, va para a aquele painel do lado direito e clicka nesse triangulozin verde que mostra aqui:
+<figure>
+  <img
+    id="img-2"
+    src="/wiki-images/j3-img-2.png"
+    alt="Novo mapa UV"
+  />
+  <figcaption>Image 2. Nova criação de Mapa UV</figcaption>
+</figure>
+
+Se pode por qualquer nome nesse mapa UV,você tera algo novo saca??? (tomara que faça sentido isso que eu disse :v)
+
+<figure>
+  <img
+    id="img-3"
+    src="/wiki-images/j3-img-3.png"
+    alt="New UVMap creation outcome"
+  />
+  <figcaption>Image 3. New UVMap created</figcaption>
+</figure>
+
+<Callout type="warning">
+  Note como a gente destaca em azul mais a camera do icone esta desativada como
+  opondo para o UV map padrão (default)  que ficara ativado, **ISSO E IMPORTANTE**. Isto
+  fala pro blender “Mostrar o UVs do UVMap no render porem qualquer ação
+  modificação e salvada nesse baguio azul.
+</Callout>
+proxima parte e o <b>UV Editing</b> tab
+<figure>
+  <img id="img-4" src="/wiki-images/j3-img-4.png" alt="UV Editing view" />
+  <figcaption>Image 4. UV Editing view</figcaption>
+</figure>
+E nesse painel da esquerda onde você editara o seu mapa UV, Por padrão, uma imagem aleatoria dos
+dos materiais/texturas do seu modelo sera selecionada porem o que NOS queremos
+uma nova imagem do 0. normalmente a gente bota a dimensão da imagem para: 2048x2048 (tambem da uns 4080x4080).
+<figure>
+  <img
+    id="img-5"
+    src="/wiki-images/j3-img-5.png"
+    alt="criando uma nova imagem para nossa textura"
+  />
+  <figcaption>Image 5. Nova imagem de textura</figcaption>
+</figure>
+Tenha certeza que sua textura em que você esta editando esteja certa e que o Mapa UV esteja certo (o que você criou minutos atras):
+<figure>
+  <img id="img-6" src="/wiki-images/j3-img-6.png" alt="New image outcome" />
+  <figcaption>Image 6. Image creation outcome</figcaption>
+</figure>
+Agora temos que arrumar os mapas uvs para eles ficarem corretos/bem feitin, se tu for precose e so for na parte de edição vai ver a bosta que ta sem arrumar:
+<figure>
+  <img id="img-7" src="/wiki-images/j3-img-7.png" alt="UV mess" />
+  <figcaption>Image 7. UV mess</figcaption>
+</figure>
+Não seje cagão, o procedimento e ate que automatico.
+
+selecione o modelo inteiro apertando a tecla “a” então aperte o “u” e selecione “Smart UV Project”, copia minha configuração ou faz do seu jeito.
+
+<figure>
+  <img
+    id="img-8"
+    src="/wiki-images/j3-img-8.png"
+    alt="UV mess fix in progress"
+  />
+  <figcaption>Image 8. Fixnig the UV mess</figcaption>
+</figure>
+Agora você tera algo tipo assim
+<figure>
+  <img
+    id="img-9"
+    src="/wiki-images/j3-img-9.png"
+    alt="UV smart project output"
+  />
+  <figcaption>Image 9. UV smart project output</figcaption>
+</figure>
+<Callout type="danger">
+  primeira vista parece ser "bom" porem tenha cuidado porque voce selecionou o UV automatico/automatic UV (blender e safado)
+  as vezes os serviço do blender vai ser porco pra krl e deixar tudo uma bagunça (eu recomendo mais tu fazer manualmente).
+</Callout>
+Por exemplo, se a gente der um zoom na esquerda abaixo (bem no cantin ali) a gente pode ver que
+que o blender fez um serviço porco
+<figure>
+  <img
+    id="img-10"
+    src="/wiki-images/j3-img-10.png"
+    alt="possivel erro do smart UV"
+  />
+  <figcaption>Image 10. possivel erro do smart UV map</figcaption>
+</figure>
+Como a gente arruma isso? Facin. Primeiro, selecione as partes afetadas, para fazer isso, voce precisa
+ativar esse pequeno icone ali no topo da esquerda no canto abaixo da imagem. Tambem tenha certeza
+que esteja na "seleção de faces/face selection" (esse iconezin sublinhado)
+<figure>
+  <img
+    id="img-11"
+    src="/wiki-images/j3-img-11.png"
+    alt="possivel erro do smart UV"
+  />
+  <figcaption>Image 11. ative a seleção de uv map reverso</figcaption>
+</figure>
+agora toda a ilha do mapa uv sera visivel no lado esquerdo, você agora consegue ver
+a areas problematicas, com o mouse passe um rosto a partir daí e pressione L para selecionar
+apenas as ilhas, você ira ver que o destaque no teu modelo 3D.
+vamos desembrulhar esse dai sozin, depois de selecionar-lo, aperta o "U" porem desta vez selecione o
+“Unwrap minimum stretch”.
+<figure>
+  <img
+    id="img-12"
+    src="/wiki-images/j3-img-12.png"
+    alt="Unwrap minimum stretch of selected area output"
+  />
+  <figcaption>
+    Image 12. Unwrap minimum stretch of selected area output
+  </figcaption>
+</figure>
+você pode redimensionar manualmente ate encaixar no espaço ou na sua imagem,
+ou deixa o blender fazer para voce! para finalizar, aperta “A” denovo para selecionar
+tudo denovo. Então va no Menu de UV e seleciona empacotar a ilha (pack the island :v)
+<figure>
+  <img
+    id="img-13"
+    src="/wiki-images/j3-img-13.png"
+    alt="Empacotando a ilha denovo"
+  />
+  <figcaption>Image 13. Empacotando a ilha denovo</figcaption>
+</figure>
+<Callout>
+  Tente usar o mesmo valor de espaço <a href="#img-8">image 8</a>
+</Callout>
+<figure>
+  <img
+    id="img-14"
+    src="/wiki-images/j3-img-14.png"
+    alt="Packing islands again (2)"
+  />
+  <figcaption>Image 14. Packing islands again (2)</figcaption>
+</figure>
+Seu mapa UV esta pronto. Vamos deixar o baking cozinhar.
+
+# 2 Passo
+
+O baking fala pro blender para transferir certas partes de como o modelo 3D deve ficar em outro lugar, geralmente uma imagem de textura.
+
+Para este passo iremos usar o <b>shading</b> aba de menus no tela do blender.
+
+Do lado esquerdo, tenha certeza de abrir sua primeira criação “one_texture” imagem ira aparecer preta.
+
+<figure>
+  <img id="img-15" src="/wiki-images/j3-img-15.png" alt="Shading tab" />
+  <figcaption>Image 15. Shading tab</figcaption>
+</figure>
+
+Agora vem a parte mais legal de tudo (se sarcasmo fosse bom :D). va para o lado direito do painel, o visualizador de imagem, e selecione a primeira. Então, no painel de macarrão (painel de node) (Essa caixa abaixo do nosso modelo 3D) Aperta F3 e escreva “Image texture”
+
+<figure>
+  <img
+    id="img-16"
+    src="/wiki-images/j3-img-16.png"
+    alt="Creating a new image texture"
+  />
+  <figcaption>Image 16. Creating a new image texture</figcaption>
+</figure>
+agora selecione o nosso “one_texture” imagem da “picture/imagem” icone. Você deve ver algo
+tipo assim
+<figure>
+  <img
+    id="img-17"
+    src="/wiki-images/j3-img-17.png"
+    alt="Creating a new image texture output"
+  />
+  <figcaption>Image 17. Creating a new image texture output</figcaption>
+</figure>
+Alem disso, eu curto mudar as cores do sRGB, o resto deixa assim.
+
+Note como voce tem um destaque branco ao redor da borda da caixa? Isso significa que esta selecionado, <b>isso tambem e importante para o baking</b>.
+
+Quando terminado, aperta ctrl+c para copiar os nós/macarrão, e va para cada um dos materiais restantes na lista do lado direito e aperta ctrl+v para colar.
+
+Se você fez corretamente, você tera uma caixa igual a essa <a href="#img-17">Image 17</a> por textura, tenha certeza que esta selecionada.
+
+# passo 3
+
+va para a tabela de renderização no painel do lado direito
+
+<figure>
+  <img id="img-18" src="/wiki-images/j3-img-18.png" alt="Render tab" />
+  <figcaption>Image 18. Creating a new image texture output</figcaption>
+</figure>
+<Callout type="warning">
+  Change the render engine from EEVEE to Cycles since EEVEE doesn’t support
+  baking.
+</Callout>
+
+entre no “Bake” submenu ali voce seleciona essas configurações:
+
+<figure>
+  <img
+    id="img-19"
+    src="/wiki-images/j3-img-19.png"
+    alt="Bake submenu settings"
+  />
+  <figcaption>Image 19. Bake submenu settings</figcaption>
+</figure>
+Um mapa difuso bake/cozinha a cor da textura, desabilitamos o direto e o indireto
+já que não queremos que nenhuma interfase de iluminação.
+
+<b>Antes de apertar “Bake”, tenha certeza de fazer esta parte</b>
+
+1. os mapas UVs selecionados são os novos que você criou
+2. tera uma nova imagem de textura selecionavel (aqueles nos/macarrão que eu chamo) nós/macarrão de imagem de textura para cada material.
+3. Your 3D model is also selected
+
+<figure>
+  <img id="img-20" src="/wiki-images/j3-img-20.png" alt="Check bake settings" />
+  <figcaption>Image 20. Check bake settings</figcaption>
+</figure>
+
+quando tudo estiver pronto, aperta no bake.
+
+Se tu seguiu o tutorial corretament, você tera algo tipo assim
+
+<figure>
+  <img id="img-21" src="/wiki-images/j3-img-21.png" alt="Bake result" />
+  <figcaption>Image 21. Bake result</figcaption>
+</figure>
+
+<Callout type="danger" title="Careful">
+  Save the image locally or you will lose it.
+</Callout>
+
+<figure>
+  <img id="img-22" src="/wiki-images/j3-img-22.png" alt="Save result" />
+  <figcaption>Image 22. Save result</figcaption>
+</figure>
+
+# Passo 4
+
+Hora de limpar e testar o resultados.
+
+volte para a visualização de layout (naquela barra de menu ali no topo), seu modelo 3D ja deve ter uma boa aparencia, bora fazer uma baguncinha ali, o adm esta dormindo(so botei de meme). Primeiro, vamos criar um novo material para segurar nossa textura.
+
+<figure>
+  <img id="img-23" src="/wiki-images/j3-img-23.png" alt="Create new material" />
+  <figcaption>Image 23. Create new material</figcaption>
+</figure>
+De um nome, Tipo “one_texture” e troca pro modo que mostra o shader/textura quando você
+bota os macarrão/nós igual essa imagem ai.
+<figure>
+  <img id="img-24" src="/wiki-images/j3-img-24.png" alt="Setting nodes" />
+  <figcaption>Image 24. Setting nodes</figcaption>
+</figure>
+volte para o lugar que mostra suas texturas e exclua tudo menos o que você criou.
+Senão vai dar merda igual esse exemplo ai em baixo
+<figure>
+  <img id="img-25" src="/wiki-images/j3-img-25.png" alt="Material doomsday" />
+  <figcaption>Image 25. Materialggedon</figcaption>
+</figure>
+Você se lembra do menu de mapa uv la? <a href="#img-2">image 2</a>? troque o
+icone da camera para mostrar o seu novo mapa UV (magia meu nobre).
+
+<Callout type="success">
+  Agora o toque final, remova o antigo “UVMap” e renomeia o novo com o mesmo
+  “UVMap” nome. Não tenho certeza porem eu li por ai que e importante ele ter o mesmo nome que o do lol (as vezes rola uns erros bizzaros pra krl).
+</Callout>

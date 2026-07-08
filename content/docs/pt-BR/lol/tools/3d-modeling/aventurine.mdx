@@ -1,0 +1,112 @@
+---
+title: "Aventurine: League Tools"
+description: "Um addon de Blender que importa e exporta meshes, skeletons e animações de League diretamente. Criado por Bud e Frog."
+category: "tools"
+---
+
+Aventurine é um **addon de Blender** criado por **Bud e Frog** (time Divine, os 2 são cornos mansos c:) que adiciona suporte nativo aos formatos do League of Legends. Ele transforma o Blender em uma ferramenta real de modding, sem depender de conversores externos.
+
+[Baixar a versão mais recente](https://github.com/RitoShark/Aventurine-League-Tools/releases)
+
+---
+
+## O que ele faz
+
+- **Importa e exporta** `.skn` (meshes com weights e materiais), `.skl` (skeletons) e `.anm` (animações) sem conversores externos.
+- **Simulação de física** para cabelo, roupas e acessórios (baseado no Wiggle 2).
+- **Retargeting de animações**, permitindo transferir animações entre rigs diferentes.
+- Suporte a **ossos personalizados** em skeletons e animações.
+- **Auto-update** dentro do próprio Blender.
+
+---
+
+## Requisitos
+
+- **Blender 4.0** ou superior.
+
+---
+
+## Instalação
+
+1. Baixe o `.zip` mais recente na página de releases.
+2. Abra o Blender.
+3. Vá em **Edit → Preferences → Add-ons**.
+4. Clique em **Install** e selecione o `.zip`.
+5. Procure por **Aventurine** na lista e ative o checkbox.
+
+O addon estará pronto para uso.
+
+---
+
+## Onde encontrar dentro do Blender
+
+1. Abra o **3D Viewport**.
+2. Pressione **N** para abrir o painel lateral.
+3. Clique na aba **Aventurine LoL**.
+
+Todos os botões de importação e exportação ficam nesse painel.
+
+---
+
+## Importação e exportação
+
+- Use os botões do painel **Aventurine LoL** para importar `.skn`, `.skl` e `.anm`.
+- Antes de exportar, verifique se o armature ou mesh correto está selecionado.
+
+---
+
+## Simulação de física
+
+As ferramentas de física vêm desativadas por padrão para manter a interface limpa.
+
+1. Vá em **Edit → Preferences → Add-ons → Aventurine**.
+2. Ative **Animation Tools**.
+3. Uma nova aba chamada **Animation Tools** aparecerá no painel lateral.
+
+Isso permite adicionar movimento secundário em cabelos, roupas e acessórios sem keyframes manuais.
+
+O addon também inclui um guia interno para física de cabelo dentro da aba de Animation Tools.
+
+---
+
+## Retargeting de animações
+
+A opção **LoL Retarget** permite transferir animações entre rigs diferentes. Útil para:
+
+- Adaptar animações para rigs customizados
+- Compartilhar animações entre campeões
+- Testar animações em modelos diferentes
+
+Ative essa função nas preferências do addon.
+
+---
+
+## Atualizações
+
+1. Vá em **Edit → Preferences → Add-ons**.
+2. Encontre **Aventurine** na lista.
+3. Expanda os detalhes do addon.
+4. Clique em **Check for Updates**.
+5. Se houver atualização, instale diretamente.
+
+---
+
+## Quando usar Aventurine vs Maya
+
+- **Use Aventurine + Blender** se você prefere Blender ou não quer usar Maya.
+- **Use [Maya + lol_maya](/docs/lol/tools/3d-modeling/maya)** se você quer o fluxo mais consolidado, com mais tutoriais e pipeline tradicional de rigging.
+
+Os dois funcionam. A escolha depende do que você realmente vai usar.
+
+---
+
+## Créditos
+
+- **Bud** — criador e desenvolvedor
+- **Frog** — desenvolvedor
+- Baseado no plugin **lol_maya** de tarngaina
+- Física baseada no **Wiggle 2** de shteeve3d
+- Parsing BIN via **ritobin** de moonshadow565
+- TEX para DDS via **Ritoddstex** de Morilli
+
+O Aventurine é licenciado sob **GPLv3**, por ser baseado no Wiggle 2. Você pode usar, modificar e distribuir livremente sob esses termos.

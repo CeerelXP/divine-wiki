@@ -1,0 +1,107 @@
+---
+
+title: "Como criar um Atlas de Materiais"
+description: "Aprenda a criar um atlas de materiais usando o plugin CATS para Blender. Este método funciona apenas no Blender 5.0."
+category: "blender"
+-------------------
+
+# Atualização
+
+**Uma atualização recente do CATS acabou quebrando a função "Generate Material List". A solução está no final deste tutorial.**
+
+Neste guia, você aprenderá a criar um **atlas de materiais** usando o plugin **CATS** para Blender. **Este método funciona apenas no Blender 5.0.**
+
+## O que é um atlas de materiais?
+
+Um atlas de materiais é uma única imagem que reúne várias texturas do seu modelo. Em vez de utilizar diversos arquivos de textura e vários materiais, todas as texturas são combinadas em uma única imagem.
+
+Isso ajuda a otimizar o modelo e evita a necessidade de recorrer ao comando **Material Override**.
+
+## Importando o modelo
+
+Para começar, importe o modelo que você deseja otimizar. Neste tutorial, usarei um modelo da Mitsuru como exemplo.
+
+<img
+src="/wiki-images/1774544749638-eptf8i.png"
+alt="1774544749638-eptf8i.png"
+width={500}
+/>
+
+O modelo está ótimo, mas há um problema: a quantidade de materiais.
+
+<img
+src="/wiki-images/1774545399727-9l279p.png"
+alt="1774545399727-9l279p.png"
+width={500}
+/>
+
+Ter vários materiais não é o ideal e pode prejudicar a otimização do modelo. A menos que você pretenda usar **Material Override**, é melhor reduzi-los para apenas um.
+
+## Gerando o atlas
+
+Pressione **N** no teclado para abrir a barra lateral do Blender.
+
+Depois, acesse a aba **CATS** e clique em **Generate Material List**.
+
+<img
+src="/wiki-images/1774545645311-0pcwda.png"
+alt="1774545645311-0pcwda.png"
+width={500}
+/>
+
+Um detalhe importante: o CATS adiciona automaticamente nós de **Alpha** em todos os materiais. Depois que o atlas for criado, lembre-se de remover os materiais antigos e excluir esses nós de Alpha para evitar problemas.
+
+Após alguns instantes, a lista de materiais será exibida.
+
+<img
+src="/wiki-images/1774545855523-xe5n5.png"
+alt="1774545855523-xe5n5.png"
+width={500}
+/>
+
+Quando todos os materiais estiverem carregados, clique em **Save Atlas To...** e escolha a pasta onde deseja salvar a textura gerada.
+
+O CATS criará uma nova imagem contendo todas as texturas combinadas em um único arquivo.
+
+## Corrigindo problemas de UV
+
+Na maioria dos casos, o processo termina aqui. No entanto, em situações **raras**, algumas ilhas UV podem ficar fora do lugar.
+
+<img
+src="/wiki-images/1774546036659-1oenou.png"
+alt="1774546036659-1oenou.png"
+width={500}
+/>
+
+Se isso acontecer, não se preocupe: a correção é simples.
+
+1. Pressione **TAB** para entrar no **Modo de Edição (Edit Mode)**.
+2. Passe o cursor sobre a parte com problema e pressione **L** para selecionar a ilha UV correspondente.
+3. Abra a área de **UV Editing**.
+4. Arraste a ilha UV para a posição correta.
+
+<img
+src="/wiki-images/1774546224536-vl2ujo.png"
+alt="1774546224536-vl2ujo.png"
+width={500}
+/>
+
+Depois do ajuste, tudo deverá ficar correto.
+
+Agora seu modelo terá apenas **um único material**, utilizando apenas **uma textura**, em vez de seis ou sete arquivos diferentes. Isso facilita o gerenciamento do modelo e melhora a otimização.
+
+E pronto! Seu atlas de materiais está concluído.
+
+## Atualização: corrigindo o erro do CATS
+
+Uma atualização do CATS alterou o local onde o plugin procura as texturas dos materiais. Felizmente, a solução é bem simples.
+
+1. Abra a unidade **C:\**.
+2. Crie uma pasta chamada **textures** na raiz do disco.
+3. Copie todas as texturas do modelo para essa pasta no formato **PNG**.
+
+Depois disso, o **Generate Material List** voltará a funcionar normalmente.
+
+---
+
+**Tutorial original por ceerel.**

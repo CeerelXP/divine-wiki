@@ -1,0 +1,69 @@
+---
+title: "Flint"
+description: "Um aplicativo tudo-em-um de modding. Extraia assets, visualize, edite arquivos BIN e empacote o mod. Tudo em uma única janela."
+category: "tools"
+---
+
+Flint é um aplicativo desktop feito por **RitoShark** que concentra a maior parte do fluxo de modding em um só lugar. Se você não quer lidar com várias ferramentas separadas para extração, edição de BIN, VFX e empacotamento, essa é a forma mais simples de começar.
+
+[Baixar a versão mais recente](https://github.com/RitoShark/Flint/releases)
+
+Última versão: **v2.1.0**.
+
+---
+
+## O que ele faz
+
+- **Extrai** skins e assets de campeões diretamente dos arquivos do jogo.
+- **Visualização** modelos 3D, texturas, arquivos BIN, animações, efeitos de partículas e áudio (BNK / WPK com waveform) sem precisar exportar nada.
+- **Editar** arquivos BIN, LuaBin e TroyBin com destaque de sintaxe.
+- **Editar o arquivos WAD em memória** diretamente do explorador e depois exporta.
+- **Converter** texturas entre `.tex` e `.dds`.
+- **Recolores** texturas com hue shift, colorização ou grayscale + tint.
+- **Porta para chromas**: seleciona um chroma e aplica um mod de skin base nele.
+- **Checkpoint de projeto**: cria snapshots, diffs e restauração de mudanças como um git simplificado.
+- **Compara e restaura** qualquer arquivo com o original do WAD caso algo quebre.
+- **Exporta** mods como `.fantome`, `.modpkg` ou sincroniza com o LTK Manager.
+- **Valida e corrige** mods com regras do Hematite (detecta shaders faltando, referências quebradas, etc).
+
+<Callout type="info" title="Hashes são automáticos">
+  O Flint baixa automaticamente uma base de hashes pré-compilada (LMDB do RitoShark `lmdb-hashes`).
+  Não existe pasta de hashes para gerenciar manualmente — ele atualiza sozinho.
+</Callout>
+
+---
+
+## Instalação
+
+1. Vá até a [página de releases](https://github.com/RitoShark/Flint/releases).
+2. Baixe o instalador mais recente para Windows.
+3. Execute. Pronto.
+
+---
+
+## Quando usar Flint vs outras ferramentas
+
+- **Use Flint** se você quer um app único para todo o fluxo (extrair, editar, empacotar).
+- **Use [Jade](/docs/lol/tools/modding-apps/jade)** se você só edita arquivos BIN e quer algo mais focado.
+- **Use [LtMAO](/docs/lol/tools/modding-apps/ltmao)** como alternativa para tarefas em lote e conversões rápidas.
+
+---
+
+## Integrações com outras ferramentas
+
+O Flint funciona bem com duas ferramentas da comunidade:
+
+- **Jade**: o Flint pode usar o motor de BIN do Jade em vez do parser próprio LTK. Você escolhe nas configurações.
+- **Quartz**: envie uma textura para o modo de pintura do Quartz e volte depois. O Flint detecta mudanças e oferece atualizar o arquivo aberto.
+
+---
+
+## Dicas
+
+- Abra múltiplas abas de projeto ao mesmo tempo. Cada uma mantém seu estado.
+- O criador de loading screen transforma MP4/WebM em spritesheet compatível com o jogo.
+- Indexação em background é opcional. Ative se quiser busca completa no WAD.
+- Arraste e solte arquivos na árvore para importar.
+- O primeiro assistente de uso te ajuda a configurar caminhos do League, PBE e integrações.
+- Não está achando um asset? Abra o cheat sheet de paths do WAD explorer.
+- Defina o Flint como app padrão para arquivos `.wad` e `.bin` para abrir direto com duplo clique.

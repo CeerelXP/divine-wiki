@@ -1,0 +1,145 @@
+---
+title: "Plugin TEX do GIMP"
+description: "Abra e exporte arquivos de textura .tex do League of Legends no GIMP. Funciona no GIMP 2.x e 3.x, Windows, Linux e macOS."
+category: "tools"
+---
+
+Abra e exporte arquivos de textura `.tex` do League of Legends no GIMP. Feito por **Frog**.
+
+Funciona com **GIMP 2.x** e **GIMP 3.x** no Windows, Linux e macOS.
+
+Download: [github.com/RitoShark/Gimp-Tex-Plugin/releases](https://github.com/RitoShark/Gimp-Tex-Plugin/releases)
+
+## O que você precisa antes de começar
+
+- GIMP 2.10 ou GIMP 3.x instalado
+- Um arquivo `.tex` para testar (qualquer textura do League funciona)
+
+## Instalação com instalador (Windows)
+
+1. Baixe `GIMP_TEX_Plugin_Setup.exe` da última release.
+2. Execute o instalador. Ele detecta automaticamente sua versão do GIMP.
+3. Siga os passos e clique em **Instalar**.
+4. Reinicie o GIMP se ele estiver aberto.
+
+O plugin estará pronto quando o GIMP mostrar suporte a `.tex` em Arquivo > Abrir.
+
+## Instalação manual (GIMP 3.x)
+
+Use isso se você estiver no Linux, macOS ou preferir não usar o instalador.
+
+1. Baixe o zip do GIMP 3 para seu sistema na última release.
+2. Extraia em uma pasta chamada `gimp3_tex_plugin` dentro do diretório de plugins do GIMP:
+
+   | Plataforma      | Diretório de plugins                                                          |
+   | --------------- | ----------------------------------------------------------------------------- |
+   | Windows         | `%APPDATA%\\GIMP\\<versão>\\plug-ins\\gimp3_tex_plugin\\`                  |
+   | Linux           | `~/.config/GIMP/<versão>/plug-ins/gimp3_tex_plugin/`                        |
+   | Linux (Flatpak) | `~/.var/app/org.gimp.GIMP/config/GIMP/<versão>/plug-ins/gimp3_tex_plugin/`  |
+   | macOS           | `~/Library/Application Support/GIMP/<versão>/plug-ins/gimp3_tex_plugin/`    |
+
+3. Reinicie o GIMP.
+
+Se o plugin não aparecer, execute `chmod +x gimp3_tex_plugin.py` na pasta extraída.
+
+## Instalação manual (GIMP 2.x)
+
+1. Baixe o zip do GIMP 2 para seu sistema na última release.
+2. Extraia no diretório de plugins do GIMP. Isso coloca `gimp2_tex_plugin.py` diretamente em `plug-ins/` e as bibliotecas em `plug-ins/gimp2_tex_libs/`.
+
+   | Plataforma      | Diretório de plugins                                         |
+   | --------------- | ------------------------------------------------------------ |
+   | Windows         | `%APPDATA%\\GIMP\\<versão>\\plug-ins\\`                    |
+   | Linux           | `~/.config/GIMP/<versão>/plug-ins/`                         |
+   | Linux (Flatpak) | `~/.var/app/org.gimp.GIMP/config/GIMP/<versão>/plug-ins/`  |
+   | macOS           | `~/Library/Application Support/GIMP/<versão>/plug-ins/`    |
+
+3. Reinicie o GIMP.
+
+Se o plugin não aparecer, execute `chmod +x gimp2_tex_plugin.py`.
+
+<Callout type="info">
+Não sabe onde fica a pasta de plugins? No GIMP, vá em **Editar > Preferências > Pastas > Plugins**.
+</Callout>
+
+## Abrir um arquivo `.tex`
+
+- Abra por **Arquivo > Abrir** e selecione o `.tex`.
+- Ou arraste e solte o arquivo no GIMP.
+
+## Exportar como `.tex`
+
+Você tem duas opções:
+
+**Exportação rápida.** Vá em **Arquivo > Exportar como**, coloque `.tex` no nome do arquivo e clique em **Exportar**. Usa as últimas configurações (padrão DXT5 com dithering).
+
+**Exportação com opções.** Vá em **Arquivo > Exportar como .tex (opções)...** e escolha compressão e outras configurações.
+
+## Opções de exportação explicadas
+
+### Formato de compressão
+
+| Formato         | O que faz                                                                                      |
+| -------------- | ---------------------------------------------------------------------------------------------- |
+| **DXT1 (BC1)** | Compressão 4:1. Sem alpha. Menor tamanho possível para texturas sólidas.                        |
+| **DXT5 (BC3)** | Compressão 4:1. Alpha completo 8-bit. Use se a textura tiver transparência.                   |
+| **BGRA8**      | Sem compressão (32-bit BGRA). Maior tamanho, sem perda de qualidade.                          |
+
+DXT1 e DXT5 exigem dimensões divisíveis por 4. Se não forem, o plugin mostra o tamanho mais próximo válido.
+
+### Dithering por difusão de erro
+
+Espalha o erro de quantização entre pixels vizinhos durante a compressão DXT. Reduz banding em gradientes.
+
+**Recomendado: Ligado.**
+
+Só funciona com DXT1 e DXT5. BGRA8 não precisa disso.
+
+### Métrica de erro
+
+Define como a compressão mede diferenças de cor.
+
+| Métrica        | O que faz                                                                                      |
+| -------------- | ---------------------------------------------------------------------------------------------- |
+| **Perceptual** | Prioriza como o olho humano vê cores (verde > vermelho > azul). Melhor visualmente.            |
+| **Uniforme**   | Trata todos os canais igualmente. Melhor para texturas não fotográficas.                      |
+
+**Recomendado: Perceptual**.
+
+### Gerar mipmaps
+
+Cria cadeia completa de mipmaps usando interpolação Lanczos3.
+
+**Recomendado: Desligado**, a menos que você saiba que precisa. Aumenta o tamanho do arquivo sem grande benefício no League.
+
+## Formatos suportados
+
+| Formato     | Carregar | Exportar |
+| ----------- | -------- | -------- |
+| DXT1 (BC1)  | Sim      | Sim      |
+| DXT5 (BC3)  | Sim      | Sim      |
+| BGRA8       | Sim      | Sim      |
+| Mipmaps     | Sim      | Sim      |
+
+## Desinstalação
+
+**Instalador (Windows).** Vá em **Configurações > Apps > Aplicativos instalados**, procure **GIMP TEX Plugin** e clique em **Desinstalar**.
+
+**Manual.** Apague os arquivos da pasta de plugins:
+
+- GIMP 3.x: remova a pasta `gimp3_tex_plugin`
+- GIMP 2.x: remova `gimp2_tex_plugin.py` e `gimp2_tex_libs`
+
+Reinicie o GIMP.
+
+## Se algo der errado
+
+- **Plugin não aparece:** verifique permissão de execução (`chmod +x gimp3_tex_plugin.py`).
+- **Não acha a pasta de plugins:** use **Editar > Preferências > Pastas > Plugins**.
+- **Erro ao exportar DXT1/DXT5:** ajuste a imagem para largura e altura divisíveis por 4.
+
+## Créditos
+
+- Formato TEX baseado em [LtMAO](https://github.com/tarngaina/LtMAO) por tarngaina.
+- Compressão DXT portada de [Microsoft DirectXTex](https://github.com/microsoft/DirectXTex) (MIT).
+- Testes no Linux por MartynasXS.

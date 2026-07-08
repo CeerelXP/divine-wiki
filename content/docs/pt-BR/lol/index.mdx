@@ -1,0 +1,186 @@
+---
+title: "Divine Skins Wiki"
+description: "Guias escritos pela comunidade para criar custom skins de League of Legends. Guias dos nossas ferramentas, aplicações 3D, animações, VFX e muito mais!"
+---
+
+Tudo o que você precisa para criar skins personalizadas de **League of Legends**, escrito pelos nossos criadores. Novo por aqui? Siga o passo a passo de cima para baixo. Já sabe o que está fazendo? Vá direto para uma seção abaixo.
+
+<div className="not-prose mt-6 flex flex-wrap gap-3">
+  <GlowCTA
+    href="/docs/lol/guided-walkthrough/walkthrough"
+    variant="solid"
+    size="lg"
+  >
+    <Icon name="Compass" className="size-4" />
+    Começar o guia completo
+  </GlowCTA>
+  <GlowCTA href="/docs/lol/tools" variant="ghost" size="lg">
+    <Icon name="Wrench" className="size-4" />
+    Ver todas as ferramentas
+  </GlowCTA>
+</div>
+
+## Comece aqui
+
+Nunca fez uma skin antes? Leia isso primeiro, ele vai do zero até uma skin completa.
+
+<PremiumCard
+  title="O guia completo"
+  href="/docs/lol/guided-walkthrough/walkthrough"
+  icon={<Icon name="Compass" />}
+>
+  Um caminho completo do iniciante ao avançado: instalar ferramentas, trocar um modelo, pintar, animar e exportar. Siga na ordem.
+</PremiumCard>
+
+## Escolha sua ferramenta
+
+Os apps que você vai realmente usar. Jade é o mais completo; os outros são especialistas.
+
+<ToolCard
+  name="Jade"
+  href="/docs/lol/tools/modding-apps/jade"
+  badge="Recomendado"
+  icon={<Icon name="Gem" />}
+>
+  Editor completo — edição de BIN, visualização e extração de arquivos, retargeting e física em um único app.
+</ToolCard>
+
+<ToolCard
+  name="Flint"
+  href="/docs/lol/tools/modding-apps/flint"
+  icon={<Icon name="Flame" />}
+>
+  Extrai assets do jogo, visualiza, edita arquivos BIN e empacota o mod final.
+</ToolCard>
+
+<ToolCard
+  name="Quartz"
+  href="/docs/lol/tools/modding-apps/quartz"
+  icon={<Icon name="Diamond" />}
+>
+  Suite focada em VFX — recolore partículas e transfere efeitos entre skins.
+</ToolCard>
+
+<ToolCard
+  name="LtMAO"
+  href="/docs/lol/tools/modding-apps/ltmao"
+  icon={<Icon name="Wrench" />}
+>
+  Kit clássico — empacotamento de WAD, gerenciamento de hashes e conversões de arquivos.
+</ToolCard>
+
+[Ver todas as ferramentas →](/docs/lol/tools)
+
+## Modelagem & texturização
+
+Crie e aplique skin ao modelo, depois deixe pronto para o jogo.
+
+<div className="not-prose grid gap-4 sm:grid-cols-2">
+
+<PremiumCard title="Maya" href="/docs/lol/maya" icon={<Icon name="Maya" />}>
+  Rigging, skinning, weight painting e exportação para League of Legends.
+</PremiumCard>
+
+<PremiumCard
+  title="Blender"
+  href="/docs/lol/blender"
+  icon={<Icon name="Blender" />}
+>
+  O mesmo fluxo de trabalho no Blender, se essa for sua ferramenta de escolha.
+</PremiumCard>
+
+</div>
+
+## Animação & VFX
+
+Faça o modelo se mover e depois deixe ele brilhando.
+
+<div className="not-prose grid gap-4 sm:grid-cols-2">
+
+<PremiumCard
+  title="Animações"
+  href="/docs/lol/animations"
+  icon={<Icon name="Clapperboard" />}
+>
+  Loops de idle, recalls e retargeting — todo o trabalho de animação.
+</PremiumCard>
+
+<PremiumCard
+  title="VFX & BINs"
+  href="/docs/lol/vfx-bins"
+  icon={<Icon name="Sparkles" />}
+>
+  Partículas e edição de BINs sem quebrar o cliente a cada cinco minutos.
+</PremiumCard>
+
+</div>
+
+## Assets & Sons
+
+Peças reutilizáveis para economizar tempo e adicionar som às suas skins.
+
+<div className="not-prose grid gap-4 sm:grid-cols-2">
+
+<PremiumCard
+  title="Biblioteca de Assets"
+  href="/docs/lol/assets-library"
+  icon={<Icon name="Library" />}
+>
+  Rigs, texturas, emissores e referências reutilizáveis.
+</PremiumCard>
+
+<PremiumCard
+  title="Modificação de Sons"
+  href="/docs/lol/sounds"
+  icon={<Icon name="Music" />}
+>
+  Aprenda a modificar sons dentro do jogo.
+</PremiumCard>
+
+</div>
+
+## Correções
+
+O que fazer quando algo quebra.
+
+<div className="not-prose grid gap-4 sm:grid-cols-2">
+
+<PremiumCard
+  title="Erros & correções"
+  href="/docs/lol/errors"
+  icon={<Icon name="TriangleAlert" />}
+>
+  Encontre seu erro e como resolvê-lo.
+</PremiumCard>
+
+</div>
+
+## Quer ajudar?
+
+Cada página desta wiki tem um botão **Editar no GitHub**. Encontrou algo errado? Corrija. Tem um guia em mente? Vá em /contribuir — o editor visual abre um pull request automaticamente.
+
+<div className="not-prose border-divine-border/60 text-divine-text-muted mt-16 border-t pt-6 text-center text-xs leading-relaxed">
+  <div>
+    A Divine Skins Wiki é um projeto comunitário não oficial. A Riot Games não
+    endossa nem patrocina este projeto. League of Legends e Riot Games são marcas registradas da Riot Games, Inc.
+  </div>
+  <div className="mt-2">
+    <a
+      href="https://divineskins.gg/legal/privacy-policy"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="hover:text-divine-text underline underline-offset-2 transition-colors"
+    >
+      Política de Privacidade
+    </a>
+    {" · "}
+    <a
+      href="https://divineskins.gg/legal/terms-of-service"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="hover:text-divine-text underline underline-offset-2 transition-colors"
+    >
+      Termos de Serviço
+    </a>
+  </div>
+</div>

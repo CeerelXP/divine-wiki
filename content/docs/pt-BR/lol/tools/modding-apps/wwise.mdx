@@ -1,0 +1,159 @@
+---
+title: "Wwise"
+description: "Middleware profissional de áudio da Audiokinetic. Necessário apenas se você for reconstruir soundbanks completos do League do zero."
+category: "tools"
+---
+
+O **Wwise** é um middleware profissional de áudio desenvolvido pela **Audiokinetic**. O League of Legends o utiliza para gerar os arquivos `.bnk` (soundbanks), que armazenam todas as falas dos campeões e seus efeitos sonoros.
+
+Você só precisa do Wwise se pretende reconstruir um soundbank completo. Para a maioria dos mods de áudio, isso **não é necessário**. Se você deseja apenas trocar um ou dois sons, vá diretamente para [Alternativas](#alternativas-a-maioria-dos-modders-quer-isso).
+
+[Baixe o Audiokinetic Launcher](https://www.audiokinetic.com/en/download/)
+
+---
+
+## Quando você realmente precisa do Wwise
+
+Você precisará do Wwise se quiser:
+
+- Adicionar novos eventos sonoros que não existem na skin original.
+- Reconstruir um arquivo `.bnk` completo do zero (novas falas com novos gatilhos, novos sons de habilidades vinculados a novos eventos ou uma reformulação completa do áudio).
+- Utilizar exatamente o mesmo fluxo de criação (authoring pipeline) empregado pela Riot.
+
+Você **não** precisa do Wwise se quiser:
+
+- Trocar as falas de um campeão pelas de outro. Utilize o **`bnk_tool`** ou o **`wiwawe`** do LtMAO.
+- Substituir sons de habilidades ou ataques por outro arquivo `.wav`. O procedimento é o mesmo.
+- Converter arquivos `.wem` para `.wav` apenas para escutá-los. O LtMAO faz isso com um simples clique com o botão direito.
+
+A maioria dos mods de áudio consiste apenas em trocar sons. Para isso, o Wwise não é necessário.
+
+---
+
+## O que ele faz no modding de League
+
+- Importa arquivos `.wav` e os converte para `.wem` (o formato utilizado pelo League).
+- Permite vincular arquivos `.wem` a **eventos** (os nomes que o jogo chama, como `Play_vo_CharacterName_Joke`).
+- Gera o arquivo `.bnk` final que será incluído no seu mod.
+- Utiliza a mesma ferramenta de criação empregada internamente pela Riot, garantindo compatibilidade com o jogo.
+
+---
+
+## Versão gratuita e versão paga
+
+O Wwise é gratuito para hobbyistas e pequenos projetos. Você só precisará pagar caso publique um jogo comercial que ultrapasse determinado limite de receita.
+
+Como mods de skins personalizadas não possuem finalidade comercial, a versão gratuita é suficiente.
+
+A versão gratuita exige apenas uma conta gratuita na Audiokinetic. Crie sua conta antes de instalar o programa.
+
+Consulte a [página oficial de preços da Audiokinetic](https://www.audiokinetic.com/en/products/pricing/) para verificar o limite atual de receita e os termos da licença, pois eles podem mudar ao longo do tempo.
+
+<Callout type="warning">
+Não utilize versões piratas do Wwise. A versão gratuita cobre tudo o que você precisa para criar mods de League.
+</Callout>
+
+---
+
+## Versão obrigatória: Wwise 2019
+
+<Callout type="warning">
+Utilize **Wwise 2019** (qualquer versão 2019.x). Versões mais recentes (2021, 2022, 2023 ou superiores) utilizam um formato diferente de soundbank que o cliente do League não consegue ler. Seu mod simplesmente não será carregado.
+</Callout>
+
+O Audiokinetic Launcher permite instalar versões antigas lado a lado com a mais recente. Durante a instalação, basta escolher a versão 2019.
+
+---
+
+## Instalação
+
+A instalação é feita em duas etapas: primeiro instale o Launcher e depois utilize-o para instalar o Wwise 2019.
+
+### Etapa 1. Criando uma conta Audiokinetic
+
+1. Acesse https://www.audiokinetic.com/en/download/.
+2. Clique em **Sign up** no canto superior direito.
+3. Informe seu e-mail e uma senha, depois confirme o e-mail enviado pela Audiokinetic.
+
+Essa conta é necessária para baixar qualquer produto.
+
+### Etapa 2. Instalando o Audiokinetic Launcher
+
+1. Abra a página de download.
+2. Clique em **Download** na seção **Audiokinetic Launcher**, escolhendo seu sistema operacional (Windows ou macOS).
+3. Execute o instalador e aceite as configurações padrão.
+4. Abra o Launcher e faça login com sua conta Audiokinetic.
+
+{/* SCREENSHOT: Tela inicial do Audiokinetic Launcher após o login */}
+
+### Etapa 3. Instalando o Wwise 2019
+
+1. No Launcher, clique na aba **Wwise**.
+2. Localize uma versão **2019.x** (a versão **2019.2.x** é recomendada).
+3. Clique em **Install** ao lado dessa versão.
+4. Na tela de instalação, mantenha os plugins padrão selecionados. Os SDKs de plataforma (Windows, Linux etc.) podem ser ignorados, já que você não está desenvolvendo um jogo.
+5. Clique em **Install** e aguarde alguns minutos.
+
+{/* SCREENSHOT: Aba Wwise do Launcher destacando uma versão 2019 */}
+
+Ao finalizar, o Wwise 2019 aparecerá na seção **Installed**.
+
+### Etapa 4. Abrindo o Wwise
+
+1. Clique em **Launch** ao lado do Wwise 2019.
+2. Na primeira execução será exibida a janela **Project Launcher**. Escolha **New Project** para criar um projeto ou **Open Other** para abrir um existente.
+
+Agora você está pronto para começar.
+
+---
+
+## Fluxo de trabalho básico
+
+Esta é uma versão resumida. A documentação da Audiokinetic explica o processo completo.
+
+1. **Crie um projeto.** Vá em **File → New Project** e escolha uma pasta fácil de localizar.
+2. **Importe o áudio.** Arraste seus arquivos `.wav` para o **Project Explorer**, dentro da seção **Actor-Mixer Hierarchy**. O Wwise os converterá automaticamente para `.wem`.
+3. **Configure os eventos.** Clique com o botão direito sobre um objeto de áudio e selecione **New Event → Play**. Dê ao evento exatamente o nome esperado pelo jogo, por exemplo `Play_vo_Yasuo_Joke`. Acertar esse nome é a parte mais importante do processo.
+4. **Crie o SoundBank.** No **SoundBank Manager**, crie um novo SoundBank e arraste os eventos para ele.
+5. **Gere o SoundBank.** Clique em **Generate Selected**. O Wwise criará um arquivo `.bnk` dentro da pasta `GeneratedSoundBanks` do projeto.
+6. **Adicione o `.bnk` ao seu mod.** Substitua o arquivo `.bnk` correspondente dentro da estrutura do seu mod.
+
+Consulte os tutoriais oficiais do Wwise para aprender o fluxo completo. Eles incluem cursos gratuitos em vídeo.
+
+<Callout type="info">
+Os nomes dos eventos utilizados pelo League estão presentes no `.bnk` original. Extraia esse arquivo primeiro usando o **bnk_tool** do LtMAO para descobrir exatamente quais nomes precisam ser utilizados.
+</Callout>
+
+---
+
+## Alternativas (a maioria dos modders quer isso)
+
+Se você deseja apenas trocar sons, pode ignorar completamente o Wwise.
+
+- **LtMAO `bnk_tool`** extrai o conteúdo de arquivos `.bnk` para `.wav` e também permite empacotá-los novamente. É a melhor opção para substituição de sons.
+- **LtMAO `wiwawe`** converte entre formatos de áudio (`.wem`, `.wav` e `.ogg`).
+
+Utilize o Wwise apenas quando precisar reconstruir completamente um soundbank, e não apenas substituir os áudios contidos nele.
+
+---
+
+## Aviso sobre regiões
+
+Skins personalizadas são apenas modificações visuais (ou sonoras) executadas no cliente do jogo. Mesmo assim, elas **não são permitidas** nos servidores da **Coreia (KR)** e da **China (CN)**.
+
+O sistema anticheat dessas regiões bloqueia qualquer tipo de modificação e sua conta pode ser banida.
+
+Isso também se aplica aos mods de áudio.
+
+Regiões consideradas seguras: **NA, EUW, EUNE, LAN, LAS, BR, OCE, TR, RU, JP, SEA, VN, PH e TW**.
+
+**Não utilize mods em KR ou CN.**
+
+---
+
+## Links úteis
+
+- Download do Audiokinetic Launcher
+- Informações sobre preços e licença gratuita do Wwise
+- Recursos oficiais de aprendizagem do Wwise
+- LtMAO (para troca de sons, sem necessidade do Wwise)

@@ -92,6 +92,20 @@ const config = {
         destination: "/en/docs/lol/contributing",
         permanent: true,
       },
+      // The contribute picker's "Manual on GitHub" card links to the
+      // game-agnostic /:lang/docs/contributing, but the page lives under the
+      // lol segment. public/_redirects handles this on Cloudflare; mirror it
+      // here so it also works in local dev (otherwise the link 404s locally).
+      {
+        source: `/:lang(${locale})/docs/contributing`,
+        destination: "/:lang/docs/lol/contributing",
+        permanent: true,
+      },
+      {
+        source: `/:lang(${locale})/docs/contributing/:path*`,
+        destination: "/:lang/docs/lol/contributing/:path*",
+        permanent: true,
+      },
       /*comment out the 2 brackets below if u wanna stop redirecting mainpage
 and docs page, i replaced both with the new one technically
 - bud*/

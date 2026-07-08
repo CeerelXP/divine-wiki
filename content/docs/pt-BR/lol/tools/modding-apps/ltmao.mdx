@@ -1,0 +1,337 @@
+---
+title: "LtMAO"
+description: "LtMAO-hai é um pacote de ferramentas criado por tarngaina para modding de League of Legends."
+category: "tools"
+---
+
+[LtMAO no GitHub](https://github.com/tarngaina/LtMAO)
+
+---
+
+O **LtMAO** é um pacote de ferramentas para modding de League of Legends, criado por tarngaina. Ele adiciona um menu de contexto no botão direito para conversão de arquivos e vem acompanhado de um conjunto de ferramentas com interface gráfica para empacotamento de WAD, arquivos 3D, áudio, texturas e muito mais.
+
+<Callout type="info" title="Pacote de ferramentas legado">
+  O LtMAO ainda funciona e cobre muitos casos de uso. Os aplicativos mais novos
+  da RitoShark agora fazem a maioria dessas tarefas com menos configuração. Use o
+  [Flint](/docs/lol/tools/modding-apps/flint) para extrair, editar e empacotar, o
+  [Quartz](/docs/lol/tools/modding-apps/quartz) para VFX e áudio, e o
+  [Jade](/docs/lol/tools/modding-apps/jade) para edição de BIN. Mantenha o LtMAO como
+  uma alternativa para tarefas em lote, o construtor no_skin e trabalho completo com soundbank.
+</Callout>
+
+---
+
+<img
+  src="/wiki-images/1767185228356-6fun2k.png"
+  alt="Janela do aplicativo LtMAO"
+  width={400}
+/>
+
+## O que o menu do botão direito faz
+
+O LtMAO adiciona um menu de contexto no botão direito do Windows Explorer. A partir dele você pode:
+
+### Converter arquivos
+
+| De     | Para   | O que faz                                       |
+| ------ | ------ | ----------------------------------------------- |
+| `.dds` | `.tex` | Converte texturas para uso dentro do jogo       |
+| `.tex` | `.dds` | Extrai texturas para que você possa editá-las   |
+| `.wem` | `.wav` | Converte arquivos de áudio para um formato editável |
+| `.bin` | `.py`  | Converte arquivos binários em Python legível    |
+| `.py`  | `.bin` | Reempacota arquivos Python editados de volta em binário |
+
+### Trabalhar com arquivos WAD
+
+- Descompacte arquivos `.wad.client` usando hashes extraídos personalizados.
+- Abra WADs de mods com caminhos alterados ou fortemente modificados.
+- Extraia arquivos individuais ou um arquivo WAD inteiro.
+
+### Exibir informações de arquivos
+
+Exiba detalhes sobre:
+
+- arquivos `.bin`: estrutura e propriedades.
+- arquivos `.skn`: dados da malha da skin.
+- arquivos `.skl`: dados do esqueleto e do rig.
+
+---
+
+https://www.youtube.com/watch?v=lJZGedIojDQ
+
+## LtMAO-hai
+
+O `LtMAO-hai` é o pacote de ferramentas do tarngaina para modding de League. Ele reúne o menu do botão direito e um conjunto de ferramentas com interface gráfica descritas abaixo.
+
+<img
+  src="https://i.postimg.cc/W4HnKJXs/screenshot-14.png"
+  alt="Janela principal do LtMAO-hai"
+  width={700}
+/>
+
+## Instalação
+
+1. Baixe o [LtMAO-hai.zip](https://github.com/tarngaina/LtMAO/archive/refs/heads/hai.zip).
+2. Extraia o zip.
+3. Execute o `LtMAO-hai/start.bat`. O aplicativo abre.
+
+## Atualizações
+
+O LtMAO-hai verifica se há uma nova versão toda vez que você abre o aplicativo. Quando há uma disponível, uma mensagem de atualização aparece na barra de título.
+
+Para atualizar por completo:
+
+1. Baixe o aplicativo novamente no GitHub.
+2. Extraia-o no mesmo local, sobrescrevendo os arquivos antigos.
+
+Para atualizar de forma rápida:
+
+1. Abra o aplicativo.
+2. Vá para a página de configurações.
+3. Clique em **Redownload LtMAO**. Este não é o caminho recomendado, mas costuma funcionar.
+
+## Documentação
+
+### Atalho
+
+Na primeira vez que você executa o aplicativo, um arquivo de atalho `LtMAO.lnk` aparece na mesma pasta do `start.bat`.
+
+<img
+  src="https://i.imgur.com/5eIWMKJ.png"
+  alt="Atalho LtMAO.lnk na pasta de instalação"
+  width={700}
+/>
+
+Para criar um atalho na área de trabalho, abra a aba de configurações e crie um a partir dali.
+
+### Tema
+
+Você pode criar o seu próprio tema. Adicione uma nova pasta dentro de `LtMAO-hai/res/themes`.
+
+Regras:
+
+- Os tamanhos das suas imagens devem usar a mesma proporção das imagens originais.
+- A cor de destaque do aplicativo vem da cor dominante do seu `background.gif`.
+- Se o nome do tema tiver um `_`, a cor de destaque será um gradiente entre as duas cores mais dominantes.
+
+<img
+  src="https://i.imgur.com/Gn9bz17.png"
+  alt="LtMAO com um tema personalizado aplicado"
+  width={700}
+/>
+
+### cslmao
+
+Uma interface de gerenciamento de mods integrada ao LtMAO. Instala e testa mods `.fantome` na sua instalação do League.
+
+Antes de usá-la, defina a pasta do jogo:
+
+1. Clique em **Show settings** no canto superior direito.
+2. Aponte para a sua pasta `League of Legends/Game`.
+
+<img
+  src="https://i.postimg.cc/BZdzbR5J/screenshot-0.png"
+  alt="Interface do cslmao com o botão de configurações"
+  width={700}
+/>
+
+### hash_helper
+
+<img
+  src="https://i.postimg.cc/7Y0W2XX0/screenshot-1.png"
+  alt="Interface do hash_helper"
+  width={700}
+/>
+
+<Callout type="warning">
+  Espere a sincronização, a atualização e o carregamento dos hashes terminarem
+  antes de executar qualquer outra função do `LtMAO`.
+</Callout>
+
+Três fontes de hash alimentam o LtMAO:
+
+1. **CDTB Hashes**: sincronizados automaticamente do [CommunityDragon](https://github.com/CommunityDragon/CDTB/tree/master/cdragontoolbox). Você também pode baixá-los manualmente no mesmo link.
+2. **Extracted Hashes**: hashes que você mesmo extrai. Você pode extrair estes:
+   - binentries:
+     - VfxSystemDefinitionData → particlePath no BIN.
+     - StaticMaterialDef → name no BIN.
+   - binhashes:
+     - Joint hashes → nomes de joints no SKL.
+     - Submesh hashes → nomes de submeshes no SKN.
+   - game:
+     - Caminhos de arquivo que começam com `assets/` ou `data/` no BIN. Se o tipo do arquivo for `.dds`, os dds 2x e 4x também são extraídos.
+3. **Custom Hashes**: o conjunto de hashes que toda função do LtMAO usa (ritobin, wad_tool, no_skin e outras).
+   - Custom Hashes = CDTB Hashes + Extracted Hashes + hashes que você adiciona manualmente.
+
+O `hash_helper` também tem um gerador de hashes de WAD e BIN. Você pode enviar os hashes gerados para os Custom Hashes com um botão.
+
+### mask_viewer
+
+Edite os pesos de MaskData dentro de BINs de animação.
+
+<img
+  src="https://i.postimg.cc/TPY7BxxJ/screenshot-2.png"
+  alt="mask_viewer editando pesos de BIN de animação"
+  width={700}
+/>
+
+### hapiBin
+
+Um aplicativo com várias funções relacionadas a arquivos BIN.
+
+<img
+  src="https://i.postimg.cc/kgChF8hZ/screenshot-3.png"
+  alt="Interface do hapiBin"
+  width={700}
+/>
+
+### no_skin
+
+Cria um mod NO SKIN que troca **quase** todas as skins do League de volta para a aparência padrão.
+
+<img
+  src="https://i.imgur.com/AfQyzFN.png"
+  alt="Interface da ferramenta no_skin"
+  width={700}
+/>
+
+O `SKIPS.json` é uma lista de skins que fazem o League travar quando trocadas de volta para a base. A ferramenta lê o arquivo e pula essas skins.
+
+Há dois modos:
+
+1. **Full**: cria um `NO SKIN.fantome` completo a partir de todos os campeões dentro de `League of Legends/Game/DATA/FINAL/Champions`.
+
+   <img
+     src="https://i.postimg.cc/ht0ZCjkG/screenshot-4.png"
+     alt="Saída do modo Full do no_skin"
+     width={700}
+   />
+
+2. **Lite**: transforma cada `skinx.bin` selecionado em `skin0.bin`.
+
+   <img
+     src="https://i.postimg.cc/c18DpTp2/screenshot-7.png"
+     alt="Resultado do modo Lite do no_skin"
+     width={700}
+   />
+
+### wad_tool
+
+Uma pequena ferramenta para descompactar e empacotar arquivos WAD.
+
+Ela pode descompactar vários WADs de uma vez em uma única pasta de saída com um filtro.
+
+<img
+  src="https://i.postimg.cc/qRNmMGzt/screenshot-5.png"
+  alt="Interface do wad_tool"
+  width={700}
+/>
+
+### sborf
+
+Corrige skins usando os arquivos originais da Riot: animações de moonwalk, animações de layering e mais.
+
+Ela também pode adaptar o MaskData do seu BIN de animação personalizado a partir dos arquivos de origem da Riot.
+
+<img
+  src="https://i.postimg.cc/KzC0KgM0/screenshot-6.png"
+  alt="Interface do sborf"
+  width={700}
+/>
+
+### lemon3d
+
+Trabalha com arquivos 3D do League.
+
+1. **fbx**:
+
+   <img
+     src="https://i.postimg.cc/q7bbTFMV/screenshot-8.png"
+     alt="Fluxo de trabalho FBX do lemon3d"
+     width={700}
+   />
+
+   Converte arquivos do League para FBX e de volta. Esta parte da ferramenta oferece suporte principalmente ao Blender. Para o Maya, use o plugin do Maya.
+
+   Suporta: SKN, SKL, ANM. Planejado: SCO, SCB, MAPGEO.
+
+2. **maya**:
+
+   <img
+     src="https://i.postimg.cc/L6Ky2LRX/screenshot-9.png"
+     alt="Interface do plugin Maya do lemon3d"
+     width={700}
+   />
+
+   <img
+     src="https://i.imgur.com/BWuIm1y.png"
+     alt="Interface do plugin lol_maya reescrito"
+     width={700}
+   />
+
+   Um `lol_maya` reescrito. Plugin para Maya 2023+ com suporte 3D.
+
+   Suporta: SKN, SKL, ANM, SCO, SCB, MAPGEO.
+
+[Leia a documentação completa do lemon3d](https://github.com/tarngaina/LtMAO/blob/main/src/LtMAO/lemon3d/README.md)
+
+### texsmart
+
+Converte arquivos de textura do League.
+
+<img
+  src="https://i.postimg.cc/pXfsTrXB/screenshot-10.png"
+  alt="Interface do texsmart"
+  width={700}
+/>
+
+### bnk_tool
+
+Cópia do `bnk-extract-GUI`, mas extrai `.wav` em vez de `.ogg`.
+
+<img
+  src="https://i.postimg.cc/Dw55rNGJ/screenshot-11.png"
+  alt="Interface do bnk_tool"
+  width={700}
+/>
+
+### wiwawe
+
+Converte arquivos de áudio.
+
+<img
+  src="https://i.postimg.cc/6Q3cYhVH/screenshot-12.png"
+  alt="Conversor de áudio wiwawe"
+  width={700}
+/>
+
+### winLT
+
+Adiciona um menu de contexto personalizado do LtMAO ao Windows Explorer.
+
+<img
+  src="https://i.imgur.com/f3XIP4M.png"
+  alt="Entradas do menu de contexto do winLT"
+  width={700}
+/>
+
+<Callout type="warning">
+  Execute o `LtMAO` como Administrador pelo atalho. Sem direitos de administrador,
+  você vai encontrar erros de permissão do Windows.
+</Callout>
+
+<img
+  src="https://i.postimg.cc/W3qnPbHg/screenshot-13.png"
+  alt="Caixa de diálogo do atalho de administrador do LtMAO"
+  width={700}
+/>
+
+## Extra
+
+- [LeagueToolKit](https://github.com/LeagueToolkit/LeagueToolkit)
+- [CDTB](https://github.com/CommunityDragon/CDTB)
+- [ritobin](https://github.com/moonshadow565/ritobin)
+- [Hacksaw](https://github.com/TheMartynasXS/Hacksaw)
+- [Uvee](https://github.com/LeagueToolkit/Uvee)
+- [Ritoddstex](https://github.com/Morilli/Ritoddstex)
+- [bnk-extract-GUI](https://github.com/Morilli/bnk-extract-GUI)

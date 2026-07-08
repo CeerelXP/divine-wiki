@@ -1,0 +1,262 @@
+---
+title: "Biblioteca de Emitters"
+description: "Guia com os principais parâmetros dos emitters de partículas e como cada um deles funciona."
+category: "assets-library"
+---
+
+## Bind Weight
+
+**`bindWeight`** controla o quanto a partícula acompanha o movimento do osso ao qual está vinculada.
+
+- `1` → acompanha completamente o osso.
+- `0` → permanece parada na posição em que foi criada.
+
+<img src="/wiki-images/1769132679719-x7qanf.png" alt="Image" width={500} />
+
+```rust
+bindWeight: embed = ValueFloat {
+    constantValue: f32 = 1
+}
+```
+
+---
+
+## Rate
+
+**`rate`** controla quantas partículas são emitidas por segundo.
+
+<img src="/wiki-images/1769132701264-5grdr.png" alt="Image" width={500} />
+
+### Exemplo: 1 Partícula
+
+```rust
+rate: embed = ValueFloat {
+    constantValue: f32 = 1 // Emite 1 partícula por segundo
+}
+```
+
+### Exemplo: 20 Partículas
+
+```rust
+rate: embed = ValueFloat {
+    constantValue: f32 = 20 // Emite 20 partículas por segundo
+}
+```
+
+---
+
+## Tempo de Vida da Partícula
+
+- **`particleLifetime`** define quanto tempo cada partícula permanece viva após ser emitida.
+- **`lifetime`** define quanto tempo o próprio emitter permanece ativo antes de desaparecer.
+
+<img src="/wiki-images/1769132720262-0d010j.png" alt="Image" width={500} />
+
+### Tempo de Vida Finito
+
+```rust
+particleLifetime: embed = ValueFloat {
+    constantValue: f32 = 1
+}
+```
+
+### Tempo de Vida Infinito
+
+```rust
+particleLifetime: embed = ValueFloat {
+    constantValue: f32 = -1 // Infinito
+}
+```
+
+### Tempo de Vida do Emitter
+
+```rust
+lifetime: option[f32] = {
+    1
+}
+```
+
+---
+
+## Particle Linger
+
+**`particleLinger`** faz com que as partículas continuem visíveis por um determinado tempo após o emitter terminar sua execução.
+
+O valor é definido em segundos.
+
+<img src="/wiki-images/1769132745363-l0cm4s.png" alt="Image" width={500} />
+
+```rust
+particleLinger: option[f32] = {1}
+```
+
+---
+
+## Misc Render Flags
+
+**`miscRenderFlags`** controla alguns comportamentos especiais de renderização das partículas.
+
+<img src="/wiki-images/1769132778060-ufd3d4.png" alt="Image" width={500} />
+
+```rust
+miscRenderFlags: u8 = 1
+```
+
+<img src="/wiki-images/1769132799839-vw26fb.png" alt="Image" width={500} />
+
+```rust
+miscRenderFlags: u8 = 0
+```
+
+---
+
+## Posição do Emitter
+
+**`EmitterPosition`** define onde as partículas serão geradas em relação ao emitter.
+
+- Valores maiores em **Y** → movem para cima.
+- Valores menores em **Y** → movem para baixo.
+
+<img src="/wiki-images/1769132826453-dvots5.png" alt="Image" width={500} />
+
+### Exemplos
+
+```rust
+EmitterPosition: embed = ValueVector3 {
+    constantValue: vec3 = { 0, 100, 0 } // Acima
+}
+```
+
+```rust
+EmitterPosition: embed = ValueVector3 {
+    constantValue: vec3 = { 0, -100, 0 } // Abaixo
+}
+```
+
+```rust
+EmitterPosition: embed = ValueVector3 {
+    constantValue: vec3 = { 100, 0, 0 } // Direita
+}
+```
+
+```rust
+EmitterPosition: embed = ValueVector3 {
+    constantValue: vec3 = { -100, 0, 0 } // Esquerda
+}
+```
+
+```rust
+EmitterPosition: embed = ValueVector3 {
+    constantValue: vec3 = { 0, 0, 100 } // Frente
+}
+```
+
+```rust
+EmitterPosition: embed = ValueVector3 {
+    constantValue: vec3 = { 0, 0, -100 } // Trás
+}
+```
+
+---
+
+## Translation Override
+
+**`translationOverride`** move todo o sistema de partículas independentemente da posição do emitter, aplicando um deslocamento global.
+
+<img src="/wiki-images/1769132846178-bcemql.png" alt="Image" width={500} />
+
+```rust
+translationOverride: vec3 = { 0, 100, 0 } // Acima
+translationOverride: vec3 = { 0, -100, 0 } // Abaixo
+translationOverride: vec3 = { 100, 0, 0 } // Direita
+translationOverride: vec3 = { -100, 0, 0 } // Esquerda
+translationOverride: vec3 = { 0, 0, 100 } // Frente
+translationOverride: vec3 = { 0, 0, -100 } // Trás
+```
+
+---
+
+## Tempo Antes da Primeira Emissão
+
+**`timeBeforeFirstEmission`** define quanto tempo o emitter espera antes de gerar a primeira partícula.
+
+<img src="/wiki-images/1769132867613-zffs1n.png" alt="Image" width={500} />
+
+```rust
+timeBeforeFirstEmission: f32 = 1
+```
+
+---
+
+## Eye Candy
+
+**`mEyeCandy`** habilita ou desabilita a opção **Hide Eye Candy** nas configurações gráficas do jogo.
+
+> Este parâmetro deve ser colocado no final do sistema de partículas.
+
+<img src="/wiki-images/1769132889330-6y5jzd.png" alt="Image" width={500} />
+
+```rust
+mEyeCandy: bool = true // ou false
+```
+
+---
+
+## Pass (Ordem de Renderização)
+
+**`Pass`** controla a ordem em que as partículas são desenhadas, funcionando de forma semelhante às camadas do Photoshop.
+
+<img src="/wiki-images/1769132912369-jb8tlr.png" alt="Image" width={500} />
+
+- `Pass = 0` → camada inferior (renderizada primeiro).
+- `Pass = 16` → camada superior (renderizada por último, ficando acima das demais).
+
+```rust
+Pass: i16 = 0
+```
+
+---
+
+## Blend Mode
+
+**`blendMode`** define como a partícula será misturada visualmente com o cenário.
+
+```rust
+blendMode: u8 = 1
+```
+
+### Valores
+
+- **1** — Sem transparência.
+  - Seguro para recolorir tanto preto quanto branco.
+
+- **3 / 4 (SCB)** — Transparência padrão.
+  - ⚠️ Evite deixar a textura muito escura, pois ela pode ficar praticamente invisível dentro do jogo.
+
+---
+
+## Máscara de Navmesh
+
+**`useNavmeshMask`** controla se o sistema de partículas utilizará o terreno como máscara.
+
+### Ativado (Usa o Terreno como Máscara)
+
+<img src="/wiki-images/1769133429180-hdk1d.gif" alt="Image" width={500} />
+
+```rust
+useNavmeshMask: flag = true
+```
+
+> A partícula será mascarada pelo terreno.
+
+---
+
+### Desativado (Ignora a Máscara do Terreno)
+
+<img src="/wiki-images/1769133650731-8zdz6u.gif" alt="Image" width={500} />
+
+```rust
+useNavmeshMask: flag = false
+```
+
+> A partícula ignorará a máscara do terreno.

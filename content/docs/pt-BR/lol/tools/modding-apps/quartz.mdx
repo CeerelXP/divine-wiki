@@ -1,0 +1,213 @@
+---
+title: "Quartz"
+category: "tools"
+---
+
+Quartz é uma suíte de modding para desktop criada por **RitoShark**, focada em VFX.  
+Se você passa a maior parte do tempo trabalhando com partículas, texturas e port de assets, essa é a ferramenta ideal. Ela reúne o motor de BIN do Jade, o LtMAO e o upscaler de IA Upscayl em uma única interface.
+
+[Baixar versão mais recente](https://github.com/RitoShark/Quartz/releases)
+
+{/* SCREENSHOT: Janela principal do Quartz mostrando a barra lateral com todas as páginas (Paint, Port, VfxHub, Asset Extractor, etc.) */}
+
+---
+
+## O que ele faz
+
+- **Recolorir partículas** na página **Paint**, com ajuste de hue, modos de blend, paletas personalizadas e gradientes aleatórios.
+- **Portar VFX** entre campeões e skins. Arraste um vfxsystem de um BIN “doador” para o alvo.
+- **Compartilhar VFX** via **VfxHub**, um banco de dados comunitário hospedado no GitHub.
+- **Extrair arquivos WAD** por campeão e ID de skin, com repathing automático.
+- **Escalar parâmetros de partículas** (birthscale, scale) em lote pela página **Bineditor**.
+- **Recolorir imagens** (PNG, JPG, DDS, TEX) com controles de hue, saturação e brilho.
+- **Fazer upscale de texturas** com o upscaler de IA Upscayl integrado.
+- **Selecionar cores** com a ferramenta **RGBA**, gerando códigos RGB no formato do League com alpha.
+- **Portar animações** entre campeões e skins com o **AniPort Simple**.
+- **Executar ferramentas .exe personalizadas** via drag-and-drop (por exemplo, `staticmatfix`).
+- **Randomizar ou renomear arquivos** em lote pela página **File Handler**.
+- **Repath de mods** com o **Bumpath**, usando hashes internos.
+- **Personalizar a interface** com o **Theme Creator** (cores, fontes, visibilidade de páginas).
+
+---
+
+## Instalação
+
+1. Vá até a página de releases.
+2. Baixe o instalador mais recente para Windows.
+3. Execute o instalador. O Quartz será aberto automaticamente ao final.
+4. Siga as instruções iniciais.
+
+💡 **Configuração inicial:** antes de extrair assets, vá em **Settings** e aponte o caminho do League of Legends (pasta Champions) e um diretório de saída. O Asset Extractor precisa disso.
+
+{/* SCREENSHOT: Primeira configuração do Quartz com seleção de pastas */}
+
+---
+
+## Como usar
+
+### Paint (recolorir partículas)
+
+A página Paint é uma das mais usadas no Quartz. Ela permite recolorir partículas mantendo consistência de luz e saturação.
+
+1. Abra a página **Paint**.
+2. Carregue o BIN do projeto. A lista de emissores aparece.
+3. Clique em um emissor ou vfxsystem para ver suas texturas.
+4. Escolha uma cor no seletor.
+5. Escolha um modo de blend (use o modo 1 para preto verdadeiro).
+6. Clique em aplicar. A textura é atualizada na pré-visualização.
+7. Sempre clique em **Backup** antes de salvar mudanças destrutivas.
+
+💡 Passe o mouse sobre qualquer textura para pré-visualizar sem abrir.
+
+{/* SCREENSHOT: Página Paint com emissor selecionado e seletor de cor aberto */}
+
+---
+
+### Port (transferir VFX entre projetos)
+
+A página Port serve para mover efeitos entre BINs diferentes.
+
+1. Abra **Port**.
+2. Carregue o BIN de destino (o skin que você está editando).
+3. Carregue o BIN “doador”.
+4. Encontre o emissor ou vfxsystem desejado.
+5. Arraste para o alvo.
+6. (Opcional) Defina como particle idle.
+7. (Opcional) Marque como efeito persistente.
+
+{/* SCREENSHOT: Página Port com drag-and-drop entre donor e target */}
+
+---
+
+### VfxHub (banco comunitário)
+
+O VfxHub é uma biblioteca de efeitos compartilhados.
+
+1. Abra **VfxHub**.
+2. Baixe a lista do GitHub.
+3. Clique em um item para baixar.
+4. Use Port para aplicar no seu projeto.
+
+Para enviar:
+
+1. Clique em upload.
+2. Escolha um vfxsystem.
+3. Adicione uma imagem opcional.
+4. Publique.
+
+---
+
+### Asset Extractor (extrair arquivos do jogo)
+
+1. Abra **Asset Extractor**.
+2. Escolha um campeão.
+3. Escolha o ID da skin.
+4. (Opcional) Ative extração de voiceover.
+5. Clique em extrair.
+6. O Quartz faz o repath automaticamente.
+
+---
+
+### Bineditor (escala em lote)
+
+1. Abra **Bineditor**.
+2. Carregue o BIN.
+3. Escolha emitters ou vfxsystems.
+4. Selecione os itens.
+5. Defina escala (ex: 2x).
+6. Aplique.
+
+---
+
+### Image Recolor (recolorir imagens)
+
+1. Abra **Image Recolor**.
+2. Arraste PNG, JPG, DDS ou TEX.
+3. Ajuste hue, saturação e brilho.
+4. Exporte.
+
+---
+
+### Upscale (IA)
+
+1. Abra **Upscale**.
+2. Arraste imagens.
+3. Escolha modelo.
+4. Execute o upscale.
+
+⚠️ Em GPUs fracas pode ser lento.
+
+---
+
+### RGBA (cores para BIN)
+
+1. Abra **RGBA**.
+2. Escolha cor ou cole hex.
+3. Defina alpha.
+4. Copie o valor formatado.
+
+---
+
+### AniPort Simple (port de animações)
+
+1. Abra **AniPort Simple**.
+2. Carregue alvo e origem.
+3. Selecione animações.
+4. Aplique.
+
+---
+
+### Tools (executar .exe externos)
+
+1. Abra **Tools**.
+2. Arraste um .exe.
+3. Execute em cima de uma pasta.
+
+---
+
+### File Handler (batch rename/random)
+
+**Randomizer:**
+1. Escolha imagens.
+2. Escolha destino.
+3. Execute.
+
+**Renamer:**
+1. Escolha prefixo/sufixo.
+2. Escolha pasta.
+3. Execute.
+
+---
+
+### Bumpath (repath de mod)
+
+1. Abra **Bumpath**.
+2. Carregue o mod.
+3. Execute repath.
+
+---
+
+### Theme Creator (UI)
+
+1. Abra Settings.
+2. Abra Theme Creator.
+3. Ajuste cores.
+4. Salve.
+
+---
+
+## Quando usar Quartz vs outras ferramentas
+
+- Use **Quartz** para VFX, partículas, port de efeitos e texturas.
+- Use **Flint** para fluxo completo de modding (extrair, editar BIN, empacotar).
+- Use **Jade** para edição focada de BIN.
+- Use **LtMAO** para tarefas em lote e menus de contexto.
+
+---
+
+## Dicas
+
+- O Theme Creator e controles de UI ficam em Settings.
+- Hashes são baixados automaticamente.
+- Flint e Quartz funcionam bem juntos.
+- Sempre use backup antes de alterações destrutivas.

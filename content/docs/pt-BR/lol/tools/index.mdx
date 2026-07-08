@@ -1,0 +1,175 @@
+---
+title: "Ferramentas"
+description: "Todas as ferramentas abordadas na documentação, organizadas por categoria. Escolha a que melhor atende ao seu fluxo de trabalho."
+category: "tools"
+---
+
+Aqui estão todas as ferramentas que cobrimos, cada uma com uma breve descrição da sua função. Clique em qualquer cartão para acessar o guia completo.
+
+**É novo no modding?** Comece pelo **[Flint](/docs/lol/tools/modding-apps/flint)**, **[Jade](/docs/lol/tools/modding-apps/jade)** e **[Quartz](/docs/lol/tools/modding-apps/quartz)**.
+
+Essas três ferramentas cobrem praticamente todo o fluxo de trabalho. As demais você pode aprender conforme surgir a necessidade.
+
+---
+
+## Aplicativos de Modding
+
+O conjunto principal de ferramentas para extrair arquivos, editar, empacotar mods, corrigir problemas e trabalhar com áudio.
+
+<ToolCard
+  name="Flint"
+  href="/docs/lol/tools/modding-apps/flint"
+  badge="Recomendado"
+>
+  Ferramenta completa para modding. Permite extrair arquivos, visualizar assets, editar arquivos BIN e empacotar mods em um único programa. É a melhor opção para quem não quer utilizar várias ferramentas separadas.
+</ToolCard>
+
+<ToolCard
+  name="Jade"
+  href="/docs/lol/tools/modding-apps/jade"
+  badge="Recomendado"
+>
+  Editor visual de arquivos BIN com destaque de sintaxe, pré-visualização ao passar o mouse e busca automática de hashes. Um fluxo de trabalho mais moderno que o Ritobin.
+</ToolCard>
+
+<ToolCard name="Quartz" href="/docs/lol/tools/modding-apps/quartz">
+  Editor de VFX e materiais. Possui modo de pintura para recoloração de partículas, ferramenta de Port para transferir VFX entre campeões, auxílio para canais RGBA e recoloração em lote de imagens.
+</ToolCard>
+
+<ToolCard name="LtMAO" href="/docs/lol/tools/modding-apps/ltmao" badge="Legado">
+  Pacote antigo de ferramentas tudo-em-um. Inclui edição de BIN, ferramentas de áudio (`bnk_tool` e `wiwawe`), empacotamento de WAD, criação de mods sem skin base, correções de animação e gerenciador de mods (`cslmao`). Mantido apenas como alternativa.
+</ToolCard>
+
+<ToolCard
+  name="Ritobin"
+  href="/docs/lol/tools/modding-apps/ritobin"
+  badge="Fluxo Antigo"
+>
+  Conversor por arrastar e soltar que transforma arquivos `.bin` em texto editável. Ainda é útil para scripts em lote, mas hoje o Jade cobre praticamente todos os casos.
+</ToolCard>
+
+<ToolCard name="Hematite" href="/docs/lol/tools/modding-apps/hematite">
+  Detecta e corrige automaticamente problemas comuns em skins, como barra de vida invisível, modelos totalmente brancos, ícones ausentes e partículas quebradas.
+</ToolCard>
+
+<ToolCard
+  name="League Mod Repather"
+  href="/docs/lol/tools/modding-apps/league-mod-repather"
+>
+  Reconstrói mods antigos para que voltem a funcionar após atualizações do League of Legends.
+</ToolCard>
+
+<ToolCard
+  name="Wwise"
+  href="/docs/lol/tools/modding-apps/wwise"
+  badge="Avançado"
+>
+  Middleware profissional de áudio. Necessário apenas para quem deseja reconstruir soundbanks `.bnk`. A versão gratuita atende projetos de hobby.
+</ToolCard>
+
+<ToolCard
+  name="Manifest Downloader GUI"
+  href="/docs/lol/tools/modding-apps/manifest-downloader-gui"
+>
+  Baixa os arquivos Manifest da Riot. Útil para acessar patches antigos, conteúdos do PBE ou assets ausentes.
+</ToolCard>
+
+<Callout type="info" title="Como extrair assets">
+
+Diversas ferramentas conseguem extrair arquivos dos WADs do League. Escolha conforme sua necessidade.
+
+- **[Flint](/docs/lol/tools/modding-apps/flint)** e **[Quartz](/docs/lol/tools/modding-apps/quartz)** reconhecem automaticamente os IDs das skins e reorganizam os caminhos dos arquivos durante a extração. Este é o fluxo recomendado pela Divine.
+- **`wadtools`**, do LeagueToolkit, é uma ferramenta de linha de comando indicada para extrações em lote.
+
+</Callout>
+
+<Callout type="info" title="Como funcionam os hashes">
+
+Arquivos WAD e BIN armazenam nomes utilizando hashes. Para transformar esses hashes novamente em nomes legíveis, as ferramentas precisam de uma tabela de hashes.
+
+- **CommunityDragon** publica as tabelas de hashes originais.
+- **[lmdb-hashes](https://github.com/RitoShark/lmdb-hashes)** reorganiza essas tabelas em um banco LMDB atualizado a cada 6 horas.
+- **Flint** e **Quartz** baixam esse banco automaticamente, sem necessidade de manter uma pasta de hashes.
+- **Ritobin** e a versão independente do **Jade** utilizam o antigo sistema de pastas do CommunityDragon.
+
+</Callout>
+
+---
+
+## Modelagem 3D
+
+Ferramentas para trabalhar com modelos, esqueletos (rigs) e animações.
+
+<ToolCard name="Maya" href="/docs/lol/tools/3d-modeling/maya">
+  Software 3D padrão da indústria. É a melhor opção para rigging, animações e edição de UVs. Recomenda-se utilizá-lo junto ao plugin **lol_maya**. Software pago.
+</ToolCard>
+
+<ToolCard
+  name="Blender"
+  href="/docs/lol/tools/3d-modeling/blender"
+  badge="Gratuito"
+>
+  Suite 3D gratuita e de código aberto. Hoje é uma excelente opção para League graças ao plugin Aventurine.
+</ToolCard>
+
+<ToolCard
+  name="Aventurine"
+  href="/docs/lol/tools/3d-modeling/aventurine"
+  badge="Equipe Divine"
+>
+  Add-on para Blender desenvolvido por Bud e Frog. Permite importar e exportar modelos, esqueletos e animações do League, além de adicionar física para cabelo, roupas e realizar retargeting de animações.
+</ToolCard>
+
+---
+
+## Texturas
+
+Editores de imagem, plugins para abrir arquivos `.tex` e extensões para visualizar texturas diretamente no Windows Explorer.
+
+<ToolCard name="Photoshop" href="/docs/lol/tools/texturing/photoshop">
+  Editor de imagens padrão da indústria. A melhor opção para trabalhos profissionais com texturas. Software pago.
+</ToolCard>
+
+<ToolCard name="GIMP" href="/docs/lol/tools/texturing/gimp" badge="Gratuito">
+  Editor de imagens gratuito e de código aberto. É a alternativa mais próxima do Photoshop.
+</ToolCard>
+
+<ToolCard
+  name="Paint.NET"
+  href="/docs/lol/tools/texturing/paint-net"
+  badge="Gratuito"
+>
+  Editor de imagens leve para Windows. Ideal para quem procura algo mais simples que Photoshop ou GIMP.
+</ToolCard>
+
+<ToolCard name="RitoTex" href="/docs/lol/tools/texturing/photoshop-tex-plugin">
+  Adiciona suporte para abrir e salvar arquivos `.tex` e `.dds` no Photoshop. Antigamente conhecido como Photoshop TEX Plugin. Essencial para editar texturas do League no Photoshop.
+</ToolCard>
+
+<ToolCard
+  name="GIMP Tex Plugin"
+  href="/docs/lol/tools/texturing/gimp-tex-plugin"
+>
+  Adiciona suporte para abrir e salvar arquivos `.tex` no GIMP.
+</ToolCard>
+
+<ToolCard
+  name="Paint.NET Tex Plugin"
+  href="/docs/lol/tools/texturing/paint-net-tex-plugin"
+>
+  Adiciona suporte para abrir e salvar arquivos `.tex` no Paint.NET.
+</ToolCard>
+
+<ToolCard
+  name="Tex Thumbnail Provider"
+  href="/docs/lol/tools/texturing/tex-thumbnail-provider"
+>
+  Exibe arquivos `.tex` como miniaturas de imagem diretamente no Windows Explorer. Desenvolvido por RitoShark.
+</ToolCard>
+
+<ToolCard
+  name="LTK Tex Thumb Handler"
+  href="/docs/lol/tools/texturing/ltk-tex-thumb-handler"
+>
+  Possui a mesma função do Tex Thumbnail Provider, porém desenvolvido pela equipe LeagueToolkit. Utilize apenas um dos dois, não ambos.
+</ToolCard>

@@ -1,0 +1,195 @@
+---
+title: "Troca de Modelo 3D"
+description: "Este guia explica como remodelar completamente um campeão de League of Legends substituindo o personagem padrão por um modelo 3D personalizado, mantendo o rig e as animações originais."
+category: "maya"
+---
+
+## ➤ Tutorial completo de model swap de campeão
+
+### Substituindo um campeão por um modelo personalizado
+
+Este guia explica como remodelar completamente um campeão de League of Legends substituindo o modelo padrão por um **modelo 3D personalizado**, mantendo o **rig e as animações originais**.
+
+---
+
+## ➜ Requisitos
+
+| Ferramenta              | Função                                                      |
+| ----------------------- | ---------------------------------------------------------- |
+| **LoL-Maya Plugin**     | Necessário para importar/exportar arquivos `.skn` e `.skl` no Maya |
+| **Autodesk Maya 2023**  | Software principal para editar o modelo do campeão         |
+| **GIMP / Photoshop**    | Editar e exportar texturas (`.dds`)                        |
+| **LtMAO**               | Converter arquivos `.tex` do League para `.dds` e vice-versa |
+| **Flint**               | Extrair arquivos originais do League (`.wad.client`)       |
+| **Jade**                | Editar arquivos `.bin` se necessário                       |
+| **LtMAO cslmao**        | Carregar e testar a skin personalizada no jogo             |
+
+---
+
+## ➜ Recomendado
+
+- **Guia em vídeo de troca completa de modelo**
+
+https://youtu.be/xqB84ga55hI?si=VFRPSomps5BPeKqe
+
+- **Tutorial de Maya do Yoru (bem detalhado)**
+
+https://www.youtube.com/watch?v=6MYNsT0q0R0&list=PLIlleiTfYK3mgr9imsnToABo3X0m9Txi-&ab_channel=Yor%C3%BBQueenofNight
+
+---
+
+## ➜ Passo 1: Importar arquivos `.skn` e `.skl`
+
+https://youtu.be/xqB84ga55hI?si=dAZXFehz94KL7hre&t=149
+
+> ⚠️ **Importante:**  
+> Não delete faces, vértices, arestas ou qualquer geometria **após fazer bind da mesh**.
+>
+> ⚠️ Primeira importação:  
+> Use **File → Import**, **não arraste e solte**.  
+> Garanta que **materiais/meshes separados** estejam ativados.
+
+<img src="/wiki-images/1768001551000-3q6i4i.png" alt="Imagem" width={700} />
+
+### Instruções
+
+1. Instale o [**LoL-Maya Plugin**](/docs/lol/maya/lol-maya-plugin)
+2. Importe os arquivos originais do campeão:
+   - `.skn` — Mesh (geometria visual)
+   - `.skl` — Esqueleto (ossos e rig)
+3. Importe seu modelo personalizado (`.fbx`, `.obj`) na mesma cena do Maya
+
+---
+
+## ➜ Passo 2: Alinhar os ossos ao modelo
+
+https://youtu.be/xqB84ga55hI?si=QdQGjLrYZuHEHs3a&t=175
+
+Alinhe o esqueleto do League ao seu modelo personalizado.
+
+### Regras
+
+- ✅ Use apenas rotação (`E`)
+- ❌ NÃO mover (`W`) ou escalar (`R`) ossos
+- Se ignorar esse passo a animação vai ficar uma merda do krl
+
+**Por quê apenas rotação?**  
+Mover ou escalar ossos quebra a compatibilidade com as animações originais do jogo.
+
+Ative a visualização de ossos através da malha:
+
+<img src="/wiki-images/1768001486509-o4wnhm.png" alt="Imagem" width={700} />
+
+Ative o modo **X-Ray / visibilidade de ossos**.
+
+---
+
+## ➜ Passo 3: Fazer bind da mesh ao esqueleto
+
+https://youtu.be/xqB84ga55hI?si=jpgbLQXdCSce7Kjm&t=290
+
+Vincule a mesh ao esqueleto para que as animações funcionem.
+
+### Ossos que devem ser vinculados
+
+- head
+- neck
+- spine
+- chest
+- clavicle
+- shoulder
+- elbow
+- hand
+- fingers
+- hips
+- pelvis
+- knee_lower
+- foot
+- root _(em alguns casos)_
+
+> ⚠️ NÃO vincule ossos auxiliares como `buffbones`, `knee_upper` ou `toe`.
+
+### Como fazer bind no Maya
+
+1. Selecione todos os ossos (CTRL)
+2. Selecione a mesh por último
+3. Vá em **Rigging → Skin → Bind Skin → Options**
+4. Configure:
+   - ❌ Bind to: Hierarquia de joints
+   - ✅ Bind to: Joints selecionados
+
+---
+
+## ➜ Passo 4: Ajustar UVs para texturas
+
+https://youtu.be/xqB84ga55hI?si=XbL4c6JUz9ZBnoqI&t=469
+
+Antes de texturizar, ajuste o UV corretamente.
+
+### Ajustando UV no Maya
+
+1. Vá para workspace de **UV Editing**
+2. Pressione **F11**
+3. Selecione todas as faces
+4. Mova os UVs para um canto do espaço UV
+
+---
+
+### Ajustar textura no GIMP / Photoshop
+
+1. Abra a textura original
+2. Ajuste para coincidir com o UV
+3. Se não bater, ficará quebrado no jogo
+
+---
+
+### Salvar textura corretamente
+
+- Formato: `.dds`
+- Compressão: **BC3 / DXT5**
+- Mipmaps: opcional (recomendado)
+
+Resoluções comuns:
+- 512×512
+- 1024×1024
+- 2048×2048
+
+---
+
+## ➜ Passo 5: Corrigir normais e exportar
+
+https://youtu.be/xqB84ga55hI?si=CMoyJ-gXCcsGNLF2&t=590
+
+Se as normais estiverem erradas, o modelo pode sumir ou ficar invertido.
+
+### Corrigir normais
+
+1. Selecione a mesh
+2. Vá em **Modeling**
+3. **Mesh Display → Reverse**
+
+---
+
+### Exportar modelo
+
+1. Selecione mesh + esqueleto
+2. **File → Export Selection**
+3. Exporte:
+   - `.skn`
+   - `.skl`
+
+> ⚠️ Os nomes devem ser exatamente iguais aos originais
+
+Exemplo (Ahri):
+Ahri.skn  
+Ahri.skl
+
+---
+
+### Substituir arquivos
+
+1. Vá até a pasta do campeão
+2. Substitua `.skn` e `.skl`
+3. Não altere a estrutura de pastas
+
+> 💡 Sempre faça backup antes de substituir arquivos

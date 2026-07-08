@@ -1,0 +1,127 @@
+---
+title: "LoL Maya Plugin"
+description: "Para começar a trabalhar com modelos de League no Maya, você vai precisar do plugin LoL-Maya criado por Tarngaina."
+category: "maya"
+---
+
+## Instalando o LoL-Maya Plugin
+
+Para começar a trabalhar com modelos de League of Legends no Maya, você vai precisar do **LoL-Maya plugin** feito por **Tarngaina**.
+
+> ⚠️ Em versões mais novas do Maya, você também pode usar **Lemon 3D** junto com **LtMAO** (também de Tarngaina) para garantir compatibilidade.
+
+<ToolCard
+  name="LoL-Maya Plugin"
+  href="https://github.com/tarngaina/lol_maya/releases"
+>
+  Baixe a versão mais recente feita por Tarngaina.
+</ToolCard>
+
+<ToolCard name="LtMAO" href="https://github.com/tarngaina/LtMAO">
+  Ferramenta de compatibilidade para versões mais novas do Maya.
+</ToolCard>
+
+<img
+  src="/wiki-images/1767019072359-dfx5or.png"
+  alt="Interface do LoL-Maya Plugin"
+  width={800}
+/>
+
+---
+
+## Download do Plugin
+
+Baixe o **LoL-Maya (última versão)**.  
+Certifique-se de usar sempre a release mais recente.
+
+---
+
+## Instalação do Plugin
+
+1. Extraia o conteúdo do arquivo `.zip`
+2. Copie os arquivos do plugin para o diretório do Maya
+
+Coloque as seguintes pastas em:
+
+```text
+Documents\maya\2023\
+```
+
+- `plug-ins`
+- `prefs`
+- `scripts`
+
+---
+
+## Ativando o Plugin no Maya
+
+1. Abra o **Maya**
+2. Vá em:
+   **Windows → Settings/Preferences → Plug-in Manager**
+3. Encontre **lol_maya** na lista
+4. Ative as duas opções:
+   - **Loaded**
+   - **Auto Load**
+
+5. Clique em **Close** e depois reinicie o Maya
+
+Se der certo, você verá as abas **LoLMaya** e **LoLMaya_MAPGEO** na barra de ferramentas principal do Maya.
+
+---
+
+### Solução de problemas
+
+<Tabs items={["Plugin não aparece", "Abas faltando", "Compatibilidade do Maya"]}>
+<Tab value="Plugin Not Showing">
+
+### O plugin não aparece no Plug-in Manager
+
+**Causas:**
+
+- Os arquivos não estão na pasta correta
+- Pasta da versão errada do Maya
+
+**Correção:**
+
+1. Verifique se os arquivos estão em `Documents\maya\[SUA_VERSAO]\`
+2. Confira se as três pastas (`plug-ins`, `prefs`, `scripts`) estão presentes
+3. Reinicie o Maya por completo
+
+</Tab>
+<Tab value="Tabs Missing">
+
+### As abas não aparecem depois de carregar
+
+**Causas:**
+
+- Plugin carregado, mas a interface não atualizou
+- O Maya precisa reiniciar
+
+**Correção:**
+
+1. Feche o Maya por completo
+2. Abra o Maya de novo
+3. Confira o Plug-in Manager mais uma vez
+4. Garanta que **Loaded** e **Auto Load** estejam ativados
+
+</Tab>
+<Tab value="Maya Compatibility">
+
+### Problemas em versões mais novas do Maya
+
+Para o **Maya 2024+**, o plugin padrão pode ter problemas de compatibilidade.
+
+**Solução:** Use **Lemon 3D + LtMAO** juntos:
+
+<ToolCard name="LtMAO" href="https://github.com/tarngaina/LtMAO">
+  Baixe para ter compatibilidade com versões mais novas do Maya.
+</ToolCard>
+
+</Tab>
+</Tabs>
+
+---
+
+## Créditos
+
+**Ferramenta por:** [Tarngaina](https://github.com/tarngaina)

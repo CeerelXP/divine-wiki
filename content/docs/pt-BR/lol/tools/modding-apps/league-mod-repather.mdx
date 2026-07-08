@@ -1,0 +1,151 @@
+---
+title: "League Mod Repather"
+description: "Uma ferramenta standalone que corrige mods de League of Legends quebrados após um patch."
+category: "tools"
+---
+
+Quando a Riot lança um patch, mods antigos podem quebrar. O League Mod Repather reconstrói seu mod para funcionar na versão atual do jogo.
+
+Baixe a versão mais recente na
+[página de releases do GitHub](https://github.com/RitoShark/League-Mod-Repather/releases).
+O guia abaixo foi verificado na versão **v2.0.4**.
+
+---
+
+## Como usar
+
+### Primeira configuração
+
+1. Baixe `LeagueModRepather.exe` e abra o programa.
+2. Clique em **Download** para baixar os arquivos de hash da CommunityDragon.
+3. Aguarde o download terminar (~1 minuto, ~220 MB).
+
+Os arquivos de hash são baixados apenas uma vez. Quando um novo patch sair, clique em **Update** para atualizar.
+
+---
+
+### Passo 1: Selecionar arquivos
+
+**Pasta dos campeões:**
+
+- Clique em **Browse** ao lado de "Champions folder".
+- Vá até: `C:\Riot Games\League of Legends\Game\DATA\FINAL\Champions`
+- Clique em **Select Folder**.
+
+**Seu mod:**
+
+- **Opção A:** selecione um arquivo `.fantome` (você pode escolher vários para repath em lote).
+- **Opção B:** selecione uma pasta de mod (para criadores que trabalham com o mod extraído).
+
+**Prefixo personalizado (opcional):**
+
+- Deixe vazio para um prefixo aleatório como `shadow` ou `dragon`.
+- Ou escreva algo como `mymod` para manter nomes consistentes.
+
+---
+
+### Passo 2: Opções de correção
+
+Essas opções ficam abaixo da seleção do mod. Elas corrigem crashes específicos. Deixe desativadas se não precisar.
+
+<Callout type="info">
+  **Merge Linked BINs** vem ativado por padrão. Mantenha ligado. Ele importa caminhos atualizados dos BINs do jogo e adiciona ao mod, corrigindo arquivos antigos (como o crash do Yone E).
+</Callout>
+
+- **No Skin Lite**: copia Skin0/Base para todos os outros slots (1 a 99). Funciona apenas em mods Base/Skin0.
+- **Nuke Materials (crash fix)**: remove entradas `StaticMaterialDef` e troca links de material por caminhos diretos de textura. Útil para crashes em campeões como Yasuo e Zed.
+- **Fix TEX Dimensions (Crash Fix)**: ajusta arquivos `.tex` com dimensões inválidas (ex: 257x257 → 256x256). Use se o mod crashar ao carregar.
+
+Clique em **Next**.
+
+---
+
+### Passo 3: Processamento
+
+O programa executa:
+
+- Detecta o campeão do mod.
+- Extrai o mod e arquivos atualizados do jogo.
+- Converte arquivos `.tex` para `.dds`.
+
+O processo leva de 2 a 5 minutos. Quando aparecer `Overlay complete`, terminou.
+
+Clique em **Next**.
+
+---
+
+### Passo 4: Selecionar BIN principal
+
+Escolha a skin na lista. Use **Skin0** para a base. Para chromas ou outras skins, selecione o slot correspondente (Skin1, Skin5, etc).
+
+Clique em **Next**.
+
+---
+
+### Passo 5: Repath
+
+A ferramenta corrige todos os caminhos de arquivos, aplica merge de BINs (se ativado) e empacota tudo em um novo `.fantome`. Os VFX vão para um BIN separado para manter o principal limpo (adicionado na v2.0.3).
+
+Quando terminar, você verá: `DONE! Created {name}_repathed.fantome`
+
+---
+
+## Local de saída
+
+Seu mod é salvo em dois lugares:
+
+```text
+C:\Users\<SeuNome>\Documents\FantomeRepathTool\
+```
+
+Ele também é salvo ao lado do `.fantome` original que você escolheu.
+
+Procure pelo arquivo terminado em `_repathed.fantome`.
+
+---
+
+## Instalação
+
+1. Abra seu gerenciador de mods (Fantome, LCS Manager ou similar).
+2. Importe o arquivo `_repathed.fantome`.
+3. Ative o mod e inicie o jogo.
+
+---
+
+## Solução de problemas
+
+**O mod ainda não funciona depois do repath:**
+
+- Confira se você escolheu o slot de skin certo (Skin0 para a base).
+- Clique em **Update** para atualizar os arquivos de hash e tente novamente.
+- Ative o **Merge Linked BINs** caso tenha desativado.
+
+**O jogo crasha ao carregar o campeão (Yasuo, Zed, outros):**
+
+- Ative o **Nuke Materials (crash fix)** e faça o repath de novo.
+
+**Crash do Yone E ou efeitos faltando:**
+
+- Confirme que o **Merge Linked BINs** está ligado. Ele vem ligado por padrão.
+
+**Crash ao iniciar o jogo com esse mod:**
+
+- Ative o **Fix TEX Dimensions (Crash Fix)** e faça o repath de novo.
+
+**A ferramenta trava em "Converting TEX to DDS":**
+
+- Isso é normal em mods grandes. Aguarde de 2 a 5 minutos.
+
+**Local dos arquivos de hash:**
+
+```text
+C:\Users\<SeuNome>\AppData\Roaming\FrogTools\hashes\
+```
+
+---
+
+## Créditos
+
+- **GuiSaiUwU** - [pyRitoFile](https://github.com/GuiSaiUwU/pyritofile-package), correção de healthbar e correção de static mat
+- **tarngaina** - [pyRitoFile](https://github.com/tarngaina/pyRitoFile), [LtMAO](https://github.com/tarngaina/LtMAO)
+- **CommunityDragon** - [Tabelas de hash](https://github.com/CommunityDragon/Data)

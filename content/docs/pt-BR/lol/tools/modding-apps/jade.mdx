@@ -1,0 +1,70 @@
+---
+title: "Jade"
+description: "Um editor moderno de arquivos BIN para modding de League. Mais rápido e fácil que o fluxo antigo via linha de comando do RitoBin."
+category: "tools"
+---
+
+Jade é um editor focado de arquivos BIN feito por **RitoShark**. É a opção recomendada se você trabalha principalmente com arquivos `.bin`.
+
+[Baixar versão mais recente](https://github.com/RitoShark/Jade-League-Bin-Editor/releases)
+
+> O Jade ainda está em desenvolvimento ativo. Pode ter partes instáveis — reporte problemas no GitHub se encontrar algum.
+
+---
+
+## O que ele faz
+
+- **Editor visual de BIN** com destaque de sintaxe (Monaco Editor, o mesmo do VS Code).
+- **Dois motores de parsing**: o próprio Jade (Rust) e o parser LTK. Você pode alternar nas configurações.
+- **Gerenciamento automático de hashes**, com download direto da CommunityDragon, sem necessidade de manter arquivos manualmente.
+- **Preview de texturas ao passar o mouse**. Veja rapidamente o que cada referência aponta.
+- **Editor de partículas** para ajustes visuais de sistemas de VFX.
+- **Abas com drag-and-drop**, permitindo editar vários arquivos ao mesmo tempo.
+- **Integração com o Quartz**. O Jade detecta quando o Quartz altera um arquivo aberto.
+
+---
+
+## Instalação
+
+1. Vá até a [página de releases](https://github.com/RitoShark/Jade-League-Bin-Editor/releases).
+2. Baixe o instalador para Windows.
+3. Execute. Pronto.
+
+Após instalar, arquivos `.bin` passam a abrir diretamente no Jade com duplo clique.
+
+---
+
+## Quando usar Jade vs outras ferramentas
+
+- **Use Jade** se o seu foco principal for edição de BIN. Ele é o caminho mais rápido entre abrir → editar → salvar.
+- **Use [Flint](/docs/lol/tools/modding-apps/flint)** se você também precisa de extração, preview e empacotamento de mods em um único app.
+- **Use [RitoBin](/docs/lol/tools/modding-apps/ritobin)** se você precisa de uma ferramenta via linha de comando para automações e scripts.
+
+<Callout type="info" title="Jade dentro do Flint">
+  O [Flint](/docs/lol/tools/modding-apps/flint) pode usar o motor de BIN do Jade diretamente.
+  Você escolhe isso nas configurações. Dentro do Flint, os hashes vêm de uma base LMDB automática,
+  então não existe pasta de hashes para gerenciar. Já o Jade standalone usa o modelo de pasta da CommunityDragon descrito acima.
+</Callout>
+
+---
+
+## Atalhos de teclado
+
+| Ação              | Atalho             |
+|-------------------|------------------|
+| Abrir arquivo     | `Ctrl + O`        |
+| Salvar            | `Ctrl + S`        |
+| Salvar como       | `Ctrl + Shift + S`|
+| Buscar            | `Ctrl + F`        |
+| Substituir        | `Ctrl + H`        |
+| Comparar arquivos | `Ctrl + D`        |
+| Editor de VFX     | `Ctrl + P`        |
+| Próxima aba       | `Ctrl + Tab`      |
+| Fechar aba        | `Ctrl + W`        |
+
+---
+
+## Dicas
+
+- Os arquivos de hash ficam em `%APPDATA%\LeagueToolkit\Requirements\Hashes`. Você pode pré-carregar isso nas configurações.
+- Ative “minimize to tray” se quiser manter o Jade aberto enquanto testa o jogo.
