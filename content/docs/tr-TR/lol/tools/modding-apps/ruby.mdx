@@ -347,12 +347,64 @@ aktardığın ve daha önce eklediklerini yönetip dışa aktardığın yer.
   width={700}
 />
 
-### Dazashu'nun shader'ları
+## Dazashu'nun shader'ları
 
-- **[AnimeToon](/wiki-files/AnimeToon.rubyshader)**: test olarak yapılan ilk
-  shader. Anime gölgeleme efekti ve dış çizgi verir.
-- **[AnimeShade](/wiki-files/AnimeShade.rubyshader)**: AnimeToon'dan daha güzel
-  bir anime gölgeleme efekti.
+<div className="text-divine-text mb-2 text-xl font-bold">
+  ### **AnimeToon önizleme:**
+</div>
+
+<div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+
+<div className="shrink-0">
+
+<img
+  src="/wiki-images/AnimeToon.webp"
+  alt="AnimeToon shader önizlemesi"
+  width={480}
+/>
+
+</div>
+
+<div>
+
+**[AnimeToon](/wiki-files/AnimeToon.rubyshader)**: test olarak yapılan ilk
+shader. Anime gölgeleme efekti ve dış çizgi verir.
+
+</div>
+
+</div>
+
+AnimeToon'un dış çizgisi için `.skn` dosyasındaki mesh normal'lerini otomatik
+düzelten yeni bir buton ekledim. Bir sorun yaşarsan ona tıkla ve önizlemede daha
+iyi görünüp görünmediğine bak. Orijinal `.skn` aynı klasörde `.bak` uzantısıyla
+yedek olarak kalır.
+
+<img src="/wiki-images/fix-skn.webp" alt="Ruby Fix SKN butonu" width={500} />
+
+<div className="text-divine-text mb-2 text-xl font-bold">
+  ### **AnimeShade önizleme:**
+</div>
+
+<div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+
+<div className="shrink-0">
+
+<img
+  src="/wiki-images/AnimeShade.webp"
+  alt="AnimeShade shader önizlemesi"
+  width={480}
+/>
+
+</div>
+
+<div>
+
+**[AnimeShade](/wiki-files/AnimeShade.rubyshader)**: AnimeToon'dan daha güzel
+bir anime gölgeleme efekti.
+
+</div>
+
+</div>
 
 <Callout type="info" title="Bunlar test shader'ları">
   İkisi de deneme ve tam olarak çalışmayabilir. BIN düzenleyicide kullanmak için

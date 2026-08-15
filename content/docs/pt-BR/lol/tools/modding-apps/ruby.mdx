@@ -351,12 +351,64 @@ próprios shaders no Ruby, e gerencia e exporta os que já adicionou.
   width={700}
 />
 
-### Shaders do Dazashu
+## Shaders do Dazashu
 
-- **[AnimeToon](/wiki-files/AnimeToon.rubyshader)**: o primeiro shader feito
-  como teste. Dá um efeito de sombreamento anime e um contorno.
-- **[AnimeShade](/wiki-files/AnimeShade.rubyshader)**: um efeito de
-  sombreamento anime mais bonito que o AnimeToon.
+<div className="text-divine-text mb-2 text-xl font-bold">
+  ### **Preview do AnimeToon:**
+</div>
+
+<div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+
+<div className="shrink-0">
+
+<img
+  src="/wiki-images/AnimeToon.webp"
+  alt="Preview do shader AnimeToon"
+  width={480}
+/>
+
+</div>
+
+<div>
+
+**[AnimeToon](/wiki-files/AnimeToon.rubyshader)**: o primeiro shader feito
+como teste. Dá um efeito de sombreamento anime e um contorno.
+
+</div>
+
+</div>
+
+Adicionei um botão novo que corrige automaticamente as normais do mesh a partir
+do `.skn` para o contorno do AnimeToon. Se tiver algum problema, clica nele e
+confere no preview se ficou melhor. O `.skn` original fica como backup na mesma
+pasta, renomeado com a extensão `.bak`.
+
+<img src="/wiki-images/fix-skn.webp" alt="Botão Fix SKN do Ruby" width={500} />
+
+<div className="text-divine-text mb-2 text-xl font-bold">
+  ### **Preview do AnimeShade:**
+</div>
+
+<div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+
+<div className="shrink-0">
+
+<img
+  src="/wiki-images/AnimeShade.webp"
+  alt="Preview do shader AnimeShade"
+  width={480}
+/>
+
+</div>
+
+<div>
+
+**[AnimeShade](/wiki-files/AnimeShade.rubyshader)**: um efeito de
+sombreamento anime mais bonito que o AnimeToon.
+
+</div>
+
+</div>
 
 <Callout type="info" title="Esses são shaders de teste">
   Os dois são experimentos e podem não funcionar perfeitamente. Importe eles
