@@ -1026,9 +1026,13 @@ html[data-font] {
     margin: 2.5rem 0;
   }
 
-  /* Images inside prose — soft border, subtle shadow. */
-  .prose img,
-  .prose img {
+  /* Screenshots inside prose — soft border, subtle shadow.
+
+     `.brand-mark` is excluded on purpose. App logos render as <img> too,
+     and at icon size a 10px radius plus a 1px border is a full circle, so
+     every tool logo came out sitting in an avatar ring. This treatment is
+     for screenshots of the tools, not for the tools' own marks. */
+  .prose img:not(.brand-mark) {
     border-radius: 10px;
     border: 1px solid var(--color-divine-border);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);

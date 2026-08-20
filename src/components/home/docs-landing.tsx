@@ -29,7 +29,7 @@ const CATEGORIES: { slug: string; icon: ReactNode; desc: string }[] = [
   {
     slug: "tools",
     icon: <WrenchIcon className="size-5" />,
-    desc: "Jade, Flint, Quartz, LtMAO and the rest — what each one actually does.",
+    desc: "Jade, Flint, Quartz, Ruby and the rest - what each one actually does.",
   },
   {
     slug: "maya",
@@ -44,7 +44,7 @@ const CATEGORIES: { slug: string; icon: ReactNode; desc: string }[] = [
   {
     slug: "animations",
     icon: <ClapperboardIcon className="size-5" />,
-    desc: "Idle loops, recalls, retargeting — all the animation stuff.",
+    desc: "Idle loops, recalls, retargeting - all the animation stuff.",
   },
   {
     slug: "vfx-bins",
@@ -71,7 +71,7 @@ const FEATURED = [
   },
   {
     href: "docs/lol/tools/modding-apps/jade",
-    label: "Jade — the all-in-one editor",
+    label: "Jade - the all-in-one editor",
   },
   {
     href: "docs/lol/animations/animation-retargeting",
@@ -165,7 +165,7 @@ export function DocsLanding({ lang }: { lang: string }) {
               Jade
             </div>
             <p className="text-divine-text-muted mt-1 text-sm leading-relaxed">
-              The all-in-one editor — meshes, textures, animations and physics
+              The all-in-one editor - meshes, textures, animations and physics
               in one app instead of five.
             </p>
             <span className="text-divine-primary-light mt-3 inline-flex items-center gap-1 text-sm font-medium">

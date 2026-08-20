@@ -37,7 +37,7 @@ export function ToolCard({ name, href, children, badge, icon }: ToolCardProps) {
         className="from-divine-primary-light to-divine-primary absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b opacity-80 transition-opacity duration-200 group-hover:opacity-100"
       />
       {icon ? (
-        <span className="text-divine-primary-light flex shrink-0 items-center [&_svg]:size-[18px]">
+        <span className="text-divine-primary-light flex shrink-0 items-center [&_img]:size-[22px] [&_svg]:size-[22px]">
           {icon}
         </span>
       ) : null}

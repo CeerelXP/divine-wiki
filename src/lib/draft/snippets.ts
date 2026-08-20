@@ -28,7 +28,7 @@ export const componentSnippets: ComponentSnippet[] = [
   {
     id: "tabs",
     label: "Tabs",
-    blurb: "Alternative paths — OS-specific steps, tool-specific workflows.",
+    blurb: "Alternative paths - OS-specific steps, tool-specific workflows.",
     snippet:
       '<Tabs items={["Windows", "macOS"]}>\n  <Tab value="Windows">\n    Windows steps here.\n  </Tab>\n  <Tab value="macOS">\n    macOS steps here.\n  </Tab>\n</Tabs>\n',
     preview:
@@ -48,7 +48,7 @@ export const componentSnippets: ComponentSnippet[] = [
   {
     id: "image",
     label: "Image",
-    blurb: "A screenshot. alt text is required — CI and reviewers enforce it.",
+    blurb: "A screenshot. alt text is required - CI and reviewers enforce it.",
     snippet:
       '<img src="/wiki-images/your-screenshot.png" alt="Short description of the image" />\n',
     preview:
@@ -76,7 +76,7 @@ export const componentSnippets: ComponentSnippet[] = [
   {
     id: "toolcard",
     label: "ToolCard",
-    blurb: "A single tool row — name, link, one-line description.",
+    blurb: "A single tool row - name, link, one-line description.",
     snippet:
       '<ToolCard name="Tool name" href="/docs/tools/slug">\n  One-line description of the tool.\n</ToolCard>\n',
     preview:
@@ -116,7 +116,7 @@ export const componentSnippets: ComponentSnippet[] = [
   {
     id: "glowcta",
     label: "GlowCTA",
-    blurb: "A glowing call-to-action button. Use sparingly — one per page.",
+    blurb: "A glowing call-to-action button. Use sparingly - one per page.",
     snippet: '<GlowCTA href="/docs/category/slug">Button label</GlowCTA>\n',
     preview: '<GlowCTA href="/docs">Browse the guides</GlowCTA>',
     docsAnchor: "glowcta",

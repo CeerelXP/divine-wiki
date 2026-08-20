@@ -8,6 +8,12 @@ import {
   YouTubeLogo,
   LeagueOfLegendsLogo,
   FlintLogo,
+  JadeLogo,
+  QuartzLogo,
+  RubyLogo,
+  LtMAOLogo,
+  GimpLogo,
+  WwiseLogo,
 } from "@/components/brand-logos";
 
 // Brand logos (Simple Icons) keyed by the names used in meta.json `icon`
@@ -25,6 +31,14 @@ const brandIcons = {
   Youtube: YouTubeLogo,
   LeagueOfLegends: LeagueOfLegendsLogo,
   Flint: FlintLogo,
+  Jade: JadeLogo,
+  Quartz: QuartzLogo,
+  Ruby: RubyLogo,
+  LtMAO: LtMAOLogo,
+  LtMao: LtMAOLogo,
+  GIMP: GimpLogo,
+  Gimp: GimpLogo,
+  Wwise: WwiseLogo,
 };
 
 /**

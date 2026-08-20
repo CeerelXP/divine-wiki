@@ -8,7 +8,7 @@ export async function GET() {
 
   const header = [
     "# Divine Skins Wiki",
-    "> Community-written guides for creating custom skins for League of Legends — modeling, texturing, VFX, animations, and tool workflows used by the Divine Skins creator community.",
+    "> Community-written guides for creating custom skins for League of Legends - modeling, texturing, VFX, animations, and tool workflows used by the Divine Skins creator community.",
     "",
     "## Guides",
     "",

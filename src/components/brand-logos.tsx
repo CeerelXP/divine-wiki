@@ -95,31 +95,92 @@ export function LeagueOfLegendsLogo({ className }: LogoProps) {
       // deliberate: with object-contain the 512x512 artwork fits by its TALLER
       // axis (content is 97.1% tall but only 89.1% wide), so the visible mark
       // lands smaller than the Lucide glyphs beside it.
-      className={`size-full scale-125 object-contain ${className ?? ""}`}
+      className={`brand-mark size-full scale-125 object-contain ${className ?? ""}`}
       aria-hidden
       draggable={false}
     />
   );
 }
 
-// Flint's own flame mark (from the app's installer-assets/flint-logo.svg),
-// flattened to a single monochrome currentColor path. The evenodd rule keeps
-// the flame's hollow band between the outer shell and the inner core. The
-// viewBox is cropped to the flame's bounds (x 8-16, y 2-20) so the tall, narrow
-// mark scales up to the same visual weight as the full-bleed brand logos.
+/**
+ * Divine's own app marks — Flint, Jade, Quartz, Ruby — taken from the
+ * official set at RitoShark/.github/public and re-encoded to WebP, trimmed
+ * to the artwork's own bounds so all four share one optical size.
+ *
+ * These stay in colour for the same reason the League mark above does. They
+ * are illustrated flame and faceted-gem artwork; flattened to a
+ * `currentColor` silhouette the gems collapse into near-identical grey
+ * blobs, which is worse than useless in a list whose whole job is telling
+ * Jade from Quartz from Ruby. Third-party tools beside them (Maya, Blender,
+ * GIMP, Wwise) stay monochrome, so colour also reads as "this one is ours".
+ *
+ * Plain <img>, not next/image, to match the sizing contract of the <svg>
+ * logos: callers pass a `size-*` className and get that box.
+ */
+function AppMark({ src, className }: LogoProps & { src: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      // No `size-full`: unlike the League mark these are called with an
+      // explicit `size-*` from the icon resolver, and stacking both leaves
+      // Tailwind to break the tie by stylesheet order rather than intent.
+      className={`brand-mark object-contain ${className ?? "size-5"}`}
+      aria-hidden
+      draggable={false}
+    />
+  );
+}
+
 export function FlintLogo({ className }: LogoProps) {
+  return <AppMark src="/brand/flint-logo.webp" className={className} />;
+}
+
+export function JadeLogo({ className }: LogoProps) {
+  return <AppMark src="/brand/jade-logo.webp" className={className} />;
+}
+
+export function QuartzLogo({ className }: LogoProps) {
+  return <AppMark src="/brand/quartz-logo.webp" className={className} />;
+}
+
+export function RubyLogo({ className }: LogoProps) {
+  return <AppMark src="/brand/ruby-logo.webp" className={className} />;
+}
+
+/**
+ * LtMAO ships no product logo. Its icon is whichever theme's character art
+ * is active, and `raora` is the one the author screenshots in the README,
+ * so that is the face the app wears by default. Square and uncropped: the
+ * circle people associate with it is GitHub's own avatar mask, not the art.
+ */
+export function LtMAOLogo({ className }: LogoProps) {
+  return <AppMark src="/brand/ltmao-logo.webp" className={className} />;
+}
+
+export function GimpLogo({ className }: LogoProps) {
   return (
     <svg
-      viewBox="3 2 18 18"
+      viewBox="0 0 24 24"
       fill="currentColor"
       className={className}
       aria-hidden
     >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M12 2C8.5 6 8 10 8 12c0 3.5 1.5 6 4 8 2.5-2 4-4.5 4-8 0-2-.5-6-4-10zM12 5c-2 3-2.5 5.5-2.5 7 0 2 .8 3.5 2.5 5 1.7-1.5 2.5-3 2.5-5 0-1.5-.5-4-2.5-7zM12 8c-1 1.5-1.5 3-1.5 4 0 1.2.5 2.2 1.5 3 1-.8 1.5-1.8 1.5-3 0-1-.5-2.5-1.5-4z"
-      />
+      <path d="M15.496 8.608a2.175 2.385 0 0 0-2.175 2.384 2.175 2.385 0 0 0 2.175 2.385 2.175 2.385 0 0 0 2.175-2.385 2.175 2.385 0 0 0-2.175-2.384zm0 .15a.934.934 0 0 1 .933.935.934.934 0 0 1-.933.934.934.934 0 0 1-.934-.934.934.934 0 0 1 .934-.934zm4.903 9.433a.314.314 0 0 0-.094.014c-.278.08-.642.735-.563 1.013.079.278.356.152.524.245.149.083.196.33.4.329-.033.446.125.903.398 1.231.464.564 1.173.576 1.627.68.453.103.789.38.955.683h-.01c.14.253.413-.965.313-1.81-.199-1.692-1.827-2.294-2.657-1.856-.095-.218-.349-.112-.507-.2-.147-.082-.195-.323-.39-.329zM2.01 8.207a2.938 2.279 78.561 0 0-.296.036 2.938 2.279 78.561 0 0-1.637 3.343 2.938 2.279 78.561 0 0 2.824 2.412 2.938 2.279 78.561 0 0 1.637-3.343A2.938 2.279 78.561 0 0 2.01 8.207zm.02.182a1.24 1.24 89.982 0 1 1.24 1.24 1.24 1.24 89.982 0 1-1.24 1.241 1.24 1.24 89.982 0 1-1.24-1.24 1.24 1.24 89.982 0 1 1.24-1.24zm7.296.619a1.61 1.957 0 0 0-1.61 1.957 1.61 1.957 0 0 0 1.61 1.957 1.61 1.957 0 0 0 1.61-1.957 1.61 1.957 0 0 0-1.61-1.957zm.01.142a.734.734 0 0 1 .733.733.734.734 0 0 1-.733.734.734.734 0 0 1-.734-.734.734.734 0 0 1 .734-.733zm13.785-7.57c-.082.01-.178.056-.278.184-2.255 3.385-5.54 4.902-7.936 5.521a3.513 3.586 0 0 1 3.25 3.576 3.513 3.586 0 0 1-3.513 3.586 3.513 3.586 0 0 1-3.375-2.595 2.676 2.998 0 0 1-2.52 2 2.676 2.998 0 0 1-2.676-2.998 2.676 2.998 0 0 1 2.675-2.999 2.676 2.998 0 0 1 2.517 2.037 3.513 3.586 0 0 1 1.878-2.27c-1.887.246-2.89-.025-4.335-.649-1.024-.56-1.722-1.173-2.48-2.359-.036-.055-.11-.086-.16-.025-.18.241-.97 5.723-.98 6.227-.033 1.632-.706 3.593-2.73 3.661 1.864 3.799 5.919 5.465 10.586 5.397 1.404.01 3.329-.332 5.171-1.243a213.84 213.84 0 0 1-1.568-.996c-1.347.788-2.935 1.09-4.674 1.019-2.217-.09-1.847-.732-1.36-.667 3.574.506 5.82-.624 7.315-2.547a34.596 34.596 0 0 1-.556-.377c-.164-.114.032-.291.385-.304h.04c.205-.002.458.056.722.206.757.433.783.965.535 1.081-.08.037-.263-.048-.439-.151-.255.329-.53.622-.818.887h.01c.668.29 1.568.684 2.005.89a9.634 9.634 0 0 0 3.017-3.574c2.18-4.449.652-12.176.614-12.29-.039-.112-.15-.211-.242-.226h-.076z" />
+    </svg>
+  );
+}
+
+export function WwiseLogo({ className }: LogoProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden
+    >
+      <path d="M6 12c0 .7644-.6193 1.3846-1.3846 1.3846-.7645 0-1.3847-.6202-1.3847-1.3846 0-.765.6202-1.3846 1.3847-1.3846C5.3807 10.6154 6 11.2351 6 12m7.8462-5.5384c0 1.0191-.826 1.8461-1.8463 1.8461-1.0188 0-1.8461-.827-1.8461-1.8461 0-1.0197.8273-1.8462 1.8461-1.8462 1.0203 0 1.8463.8265 1.8463 1.8462M1.8462 12a.923.923 0 0 1-.9231.923C.4143 12.923 0 12.5096 0 12c0-.5102.4142-.923.923-.923.51 0 .923.4128.923.923M24 12c0 .5095-.4133.923-.923.923-.5089 0-.9231-.4135-.9231-.923 0-.5102.4142-.923.923-.923.5098 0 .923.4128.923.923m-3.2306 0c0 .7644-.6195 1.3846-1.3847 1.3846C18.6203 13.3846 18 12.7644 18 12c0-.765.6203-1.3846 1.3846-1.3846.7652 0 1.3847.6197 1.3847 1.3846m-8.2252 2.8356c.0034.535.2557 1.0139.6581 1.3139.4006.3332.6584.8409.6584 1.4048 0 1.0139-.8192 1.8303-1.8295 1.8303H12c-1.0116 0-1.8317-.8164-1.8317-1.8303 0-.564.2596-1.0716.6606-1.4048.3999-.3.6615-.7788.6577-1.314v-.1283c-.004-.5395-.2578-1.0183-.6577-1.3154-.401-.336-.6606-.8423-.6606-1.4077 0-1.0125.8201-1.8302 1.8317-1.8302h.0312c1.0103 0 1.8295.8177 1.8295 1.8302 0 .5654-.2578 1.0717-.6584 1.4077a1.6166 1.6166 0 0 0-.658 1.3154v.1284m3.6922-2.7692c.0033.535.2557 1.0139.658 1.3139.4007.3332.6585.8409.6585 1.4048 0 1.0139-.8192 1.8302-1.8295 1.8302h-.031c-1.0118 0-1.8318-.8163-1.8318-1.8302 0-.564.2597-1.0716.6606-1.4048.3999-.3.6614-.7788.6577-1.314v-.1283c-.004-.5395-.2578-1.0183-.6577-1.3154-.401-.336-.6606-.8423-.6606-1.4077 0-1.0125.82-1.8302 1.8318-1.8302h.031c1.0103 0 1.8295.8177 1.8295 1.8302 0 .5654-.2578 1.0717-.6584 1.4077a1.6166 1.6166 0 0 0-.658 1.3154v.1284m-7.3848 0c.0035.535.2559 1.0139.6582 1.3139a1.828 1.828 0 0 1 .6583 1.4048c0 1.0139-.8193 1.8302-1.8294 1.8302h-.0312c-1.0116 0-1.8317-.8163-1.8317-1.8302 0-.564.2596-1.0716.6606-1.4048.3999-.3.6615-.7788.6577-1.314v-.1283c-.004-.5395-.2578-1.0183-.6577-1.3154-.401-.336-.6606-.8423-.6606-1.4077 0-1.0125.8201-1.8302 1.8317-1.8302h.0312c1.0101 0 1.8294.8177 1.8294 1.8302 0 .5654-.2578 1.0717-.6583 1.4077a1.617 1.617 0 0 0-.6582 1.3154v.1284" />
     </svg>
   );
 }

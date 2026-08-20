@@ -28,7 +28,7 @@ export default function Error({
         <span className="divine-gradient-text">Crash</span> reported
       </h1>
       <p className="text-divine-text-muted mt-5 max-w-xl text-base font-[var(--font-section)] md:text-lg">
-        The page hit an error and stopped rendering. Try once more — if it
+        The page hit an error and stopped rendering. Try once more - if it
         happens again, drop us a note in Discord with the digest below.
       </p>
 
