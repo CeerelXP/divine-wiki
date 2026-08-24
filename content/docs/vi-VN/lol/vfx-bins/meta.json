@@ -3,6 +3,7 @@
   "icon": "Sparkles",
   "pages": [
     "file-formats",
+    "bin-dictionary",
     "matrix-scaling",
     "static-materials",
     "idle-particles",

@@ -1,0 +1,798 @@
+---
+title: "Bin & Particle Dictionary"
+description: "Bir League of Legends VFX bin dosyasındaki özelliklerin, her birinin gerçekte ait olduğu sınıfa göre düzenlenmiş referansı."
+category: "vfx-bins"
+authors:
+  - name: DAKA
+    url: https://github.com/sxrmss
+---
+
+Bu bölümdeki diğer sayfalar sana bir şeyi nasıl _yapacağını_ öğretir. Bu sayfa ise bir `.py` dökümünde gezinirken hiç görmediğin bir özelliğe rastladığın ve sadece onun ne olduğunu ve nerede durduğunu bilmek istediğin an içindir.
+
+Girdiler **onlara sahip olan sınıfa** göre gruplanmıştır, çünkü bir bin içinde aynı isim birden fazla sınıfta görünebilir ve hangisinin içinde olduğunu bilmek değerin ne yaptığını belirler.
+
+<Callout type="info" title="Bunu Ruby ile yan yana oku">
+  Bu özelliklerin çoğunu okuyarak değil, oynayarak daha hızlı anlarsın.
+  [Ruby](/docs/lol/tools/modding-apps/ruby) herhangi bir şampiyonda VFX önizler ve
+  içinde bin düzenleyici vardır, yani bir değeri değiştirip ne yaptığını öğrenmek
+  için mod paketlemek yerine doğrudan viewport'a bakabilirsin.
+</Callout>
+
+<Callout type="info" title="Bu isimler nereden geliyor">
+  Bu sayfadaki her sınıf, özellik ve tip doğrudan motorun kendi kayıtlı sınıf
+  düzeninden okundu ve **16.16** yamasına karşı doğrulandı. Artık var olmayan alan
+  isimleri kaldırıldı, beklediğinden farklı bir sınıfta yaşayanlar ise gerçekte
+  nerede olduklarıyla birlikte işaretlendi. Motorun, özelliğin adının ima
+  ettiğinden başka bir şey yaptığı yerlerde birkaç davranış ayrıca not edildi.
+
+Yapısal veriyi buradan bulabilirsin:
+[lol-meta-classes](https://github.com/LeagueToolkit/lol-meta-classes). Meta
+sınıfları ve özellikleri hakkındaki dokümantasyonu da
+[lol-meta-wiki](https://meta-wiki.leaguetoolkit.dev/) üzerinde bulabilirsin.
+
+</Callout>
+
+---
+
+## Bir bin nasıl okunur
+
+Bir VFX bin bir ağaçtır. Omurgası şöyle görünür:
+
+```
+VfxSystemDefinitionData              tek bir tam efekt, örn. bir recall ya da bir Q
+└── complexEmitterDefinitionData     sistemin sahip olduğu yayıcı listesi
+    └── VfxEmitterDefinitionData     tek bir yayıcı: bir iz, bir parlama, kıvılcımlar
+        ├── primitive                her partikülün ne çizdiği
+        └── *Definition işaretçileri erozyon, palet, distorsiyon, çocuklar, ...
+```
+
+`VfxSystemDefinitionData` kapsayıcıdır. Bir yetenek sırasında oynatılan sistemin içinde olmayan bir özellik, o yetenek sırasında ekranda görünmez.
+
+Zamanının çoğunu yayıcıda geçirirsin. Tek başına 145'e yakın, tam olarak 135 kayıtlı alan taşır ve işaretçiler üzerinden bir düzine isteğe bağlı alt tanım nesnesi asar. **Boş bir işaretçi o özelliğin tamamen kapalı olduğu anlamına gelir**, bir bloğu silmenin çoğu zaman bir şeyi kapatmanın doğru yolu olmasının sebebi budur.
+
+### Değer sarmalayıcıları
+
+Sayısal özellikler genelde sarmalanır ki motor onları sabit tutabilsin ya da değiştirebilsin:
+
+```rust
+rate: embed = ValueFloat {
+    constantValue: f32 = 20
+}
+```
+
+Sarmalayıcılar `ValueFloat`, `ValueColor`, `ValueVector2` ve `ValueVector3`. Her biri bir `constantValue` ve isteğe bağlı bir `dynamics` işaretçisi tutar. Bunlar **aynı alanın iki yazımı değil, iki ayrı alandır**: sabit her zaman oradadır, `dynamics` ise ona asılmış fazladan bir nesnedir.
+
+| Anahtar | Nerede yaşar | Ne olduğu |
+| :------ | :----------- | :-------- |
+| `constantValue` | sarmalayıcıda | Yazılmış değer. Tip sarmalayıcıya göre: `f32`, `vec4`, `vec2`, `vec3` |
+| `dynamics` | sarmalayıcıda | Animasyonlu değişken nesnesine işaretçi. Boşsa sabit olduğu gibi kullanılır |
+| `times` | dynamics nesnesinde | Eğri boyunca konumlar |
+| `values` | dynamics nesnesinde | `times` içindeki her eşleşen girdideki değer |
+| `probabilityTables` | dynamics nesnesinde | Partikül başına rastgelelik. Aşağıya bak |
+
+<Callout type="warning" title="probabilityTables çarpar, seçmez">
+  Bir olasılık tablosu çoğu zaman "bu değerlerden birini rastgele seç" diye
+  okunur. Öyle değil. Her tablo **düzgün dağılımlı bir rastgele çekilişi** kendi
+  `keyTimes` ile `keyValues` eğrisinden geçirir ve bir **çarpan** döndürür, o da
+  `constantValue` üzerine uygulanır. Çekiliş **partikül başına bir kez, doğumda**
+  gerçekleşir.
+
+Yani `0.5` ile `1` aralığını döndüren bir tabloyla `5` olan bir `constantValue`
+her partiküle `2.5` ile `5` arasında bir değer verir. `keyValues` değerleri sıfırı
+geçen bir tablo, örneğin `-1` ile `1`, partiküllerin kabaca yarısında **işareti
+ters çevirir**. Bazı partiküllerin diğerlerinin tersine kayması ya da dönmesinin
+alışılmış açıklaması budur.
+
+Bir olasılık tablosundaki `keyTimes` değerinin partikülün yaşı değil, **çekiliş
+ekseni** olduğunu unutma.
+
+</Callout>
+
+### Doğum özellikleri ve ömür boyu ortakları
+
+Birçok özellik çift halinde gelir. `birth*` olanı partikül doğduğunda **bir kez** hesaplanır. Ön eki olmayan ortağı ise **partikülün ömrü boyunca** etki etmeye devam eder ve doğum değerinin yerine geçmek yerine onunla çarpılır.
+
+| Doğumda | Ömür boyunca |
+| :------ | :----------- |
+| `birthColor` | `Color` |
+| `birthScale0` | `scale0` |
+| `birthRotation0` | `rotation0` |
+| `birthVelocity` | `velocity` |
+| `birthAcceleration` | `acceleration` |
+| `birthDrag` | `drag` |
+
+Bir değer yanlış görünüyorsa ve çiftin yalnızca bir yarısı yazılmışsa, herhangi bir şeyi değiştirmeden önce diğer yarısına bak.
+
+### Birimler
+
+Dönüşler ve dönüş hızları **derece** ve saniyede derece cinsindendir. Ömürler, periyotlar ve gecikmeler **saniye** cinsindendir. UV kaydırma hızları **saniyede UV**, UV dönüşü ise derece cinsindendir. Renk kanalları `0` ile `1` arasındadır.
+
+### Rastgelelik ve `0` soneki
+
+Birkaç doğum özelliği `0` ile biter, `birthScale0` ve `birthRotation0` gibi. Bu bir isimlendirme kalıntısıdır, **minimum-maksimum çifti değildir**. Güncel yayıcı sınıfında eşleşen bir `birthScale1` yoktur. Partikül başına değişkenlik yukarıdaki gibi `probabilityTables` üzerinden gelir.
+
+### Bayrak baytları
+
+Birçok boolean ayrı alan değildir. Bunlar yayıcıdaki paylaşılan bayrak baytlarına paketlenmiş tekil bitlerdir. Metin araçları onları `flag` olarak tek tek gösterir, yani birer birer yazarsın, ama bayt başına dört ya da sekiz tanesi yaşar. Tam liste [Yayıcı bayrakları](#yayıcı-bayrakları) bölümünde.
+
+---
+
+## Sistem seviyesi
+
+`VfxSystemDefinitionData`, en dıştaki kapsayıcı. 16.16 yamasında 33 kayıtlı alan.
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `particleName` | `string` | Tüm sistemin okunabilir adı. Güvenle yeniden adlandırılır ve kapsayıcının hash'i çözülmediğinde aranacak en güvenilir şeydir |
+| `particlePath` | `string` | Motorun sistemleri düzenlemek için kullandığı yol gruplaması |
+| `complexEmitterDefinitionData` | `list[embed]` | Bu sistemin sahip olduğu yayıcılar. Efektin asıl gövdesi |
+| `simpleEmitterDefinitionData` | `list[embed]` | Daha eski yayıcı listesi. Legacy sistemlerde hâlâ mevcut |
+| `materialOverrideDefinitions` | `list[embed]` | Sistem genelinde materyal geçersiz kılmaları. Yayıcının aynı isimde kendi listesi var |
+| `transform` | `mtx44` | Tüm sisteme uygulanır; onu tek parça olarak ölçeklemek, taşımak ve döndürmek için. Bak [Matrix Scaling](/docs/lol/vfx-bins/matrix-scaling) |
+| `flags` | `u16` | Sistem seviyesi bit bayrakları. İkisi biliniyor: `0x100` hız ve drag'i kapalı formda bir çözüme geçirir, `0x800` ise agresif düşük donanım modudur. Varsayılan `212` |
+| `mEyeCandy` | `bool` | Sistemi göz süsü olarak işaretler, böylece oyuncu Göz Süsünü Gizle'yi açtığında kaybolur |
+| `buildUpTime` | `f32` | Sistemin ısınma süresi |
+| `visibilityRadius` | `f32` | Culling yarıçapı |
+| `overrideScaleCap` | `option[f32]` | Sistemin ne kadar ölçeklenebileceğini sınırlar |
+| `scaleDynamicallyWithAttachedBone` | `bool` | Sistem ölçeği bağlı olduğu kemiği takip eder |
+| `objectPath` | `hash` | Nesne yolu tanımlayıcısı. 16.16 yamasında eklendi |
+| `drawingLayer` | `u8` | Sistemin hangi katmana çizdiği |
+| `ClockToUse` | `u8` | Sistemin zamanını hangi saatin sürdüğü |
+| `selfIllumination` | `f32` | Kendi kendine aydınlanma miktarı |
+| `assetRemappingTable` | `list[embed]` | Sistem içinde uygulanan asset yeniden eşlemeleri |
+| `soundOnCreateDefault` | `string` | Sistem oluşturulduğunda çalan ses |
+| `voiceOverOnCreateDefault` | `string` | Oluşturulduğunda çalan seslendirme |
+| `soundPersistentDefault` | `string` | Sistemin ömrü boyunca döngüde çalan ses |
+
+<Callout type="info" title="mEyeCandy bir sistem özelliğidir">
+  Yayıcıda değil `VfxSystemDefinitionData` üzerinde durur, bu yüzden bloğun
+  yayıcı render ayarlarının yanında değil sistem seviyesinde yer alır.
+</Callout>
+
+---
+
+## Yayıcı: kimlik ve ömür
+
+`VfxEmitterDefinitionData`. Buradan [Yayıcı bayrakları](#yayıcı-bayrakları) bölümüne kadar her şey, bir satır aksini söylemedikçe bu sınıftadır.
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `emitterName` | `string` | Tek bir yayıcının okunabilir adı. Güvenle yeniden adlandırılır ve buna değer |
+| `disabled` | `bool` | Yayıcıyı silmeden kapatır |
+| `importance` | `u8` | Kalite culling önceliği, Efekt Kalitesi video ayarına karşı kontrol edilir. Aşağıdaki tabloya bak. Varsayılan `2` |
+| `particleLifetime` | `ValueFloat` | Her partikülün yayıldıktan sonra ne kadar yaşadığı. Yoksa varsayılan `3.0`. `-1` bir nöbetçi değerdir, aşağıdaki uyarıya bak |
+| `lifetime` | `option[f32]` | Yayıcının kendisinin ne kadar çalıştığı |
+| `particleLinger` | `option[f32]` | Yayıcı bittikten sonra partiküllerin görünür kaldığı ek saniyeler. Yoksa varsayılan sıfır değil, `particleLifetime + 10` |
+| `emitterLinger` | `option[f32]` | Yayıcının kendisinin oyalandığı ek saniyeler |
+| `particleLingerType` | `u8` | Hangi oyalanma davranışının kullanıldığı |
+| `Linger` | `pointer` | Bir `VfxLingerDefinitionData`; kaybolmayı sadece geciktirmek yerine partikülü değiştiren oyalanma için |
+| `flexParticleLifetime` | `pointer` | Partikül ömrü için flex geçersiz kılma |
+
+<Callout type="warning" title="particleLifetime -1 birbirine zıt iki şey demektir">
+  `-1` "sonsuz partikül" demek **değildir**. "Yayıcı durana kadar yaşa" demektir
+  ve bunun sana ne verdiği tamamen `isSingleParticle` değerine bağlıdır.
+
+`isSingleParticle` açıkken yayma penceresi kısıtlaması atlanır, pencere
+sınırsız kalır, yayıcı asla tamamlanmaz ve partikül **süresiz olarak var
+olmaya devam eder**. Kalıcı olarak takılı bir aksesuar böyle kurulur.
+
+`isSingleParticle` olmadan kısıtlama dalı hiç çalışmaz ve yayma penceresi yazılı
+`lifetime` değerinde kalır. Yayıcı orada durur ve partiküllerini de beraberinde
+götürür, yani sürekli bir `-1` kalıcı olmak yerine **kaybolur**.
+
+Yazılmış bir `9999` da `-1` ile aynı davranır.
+
+</Callout>
+
+### `importance` nasıl eler
+
+`importance`, sistem yayıcılarını kurarken oyuncunun Efekt Kalitesi ayarına karşı kontrol edilir. Bu bir ölçek değil, bir kategoridir ve iki değer adının ima ettiğinden farklı davranır.
+
+| Efekt Kalitesi | Elenen importance değerleri |
+| :------------- | :-------------------------- |
+| 0 ile 1, Çok Düşük ve Düşük | `0`, `1`, `5` |
+| 2, Orta | `0`, `1` |
+| 3, Yüksek | `0`, `4` |
+| 4, Çok Yüksek | `4` |
+
+Yani `0` ile `3` öncelikte yükselir ve `3` oynanış için kritiktir, asla elenmez. `4`, yalnızca düşük ayarlarda gösterilen **düşük kaliteli bir yedektir**, `5` ise tersi, yalnızca Orta ve üstünde gösterilir. Bir `4` yayıcısını bir `5` yayıcısıyla eşlemek, tek bir efektin kendisinin iki sürümünü göndermesinin yoludur.
+
+Bir yayıcının var olup olmadığını dört şey daha belirler: `disabled`, `colorblindVisibility`, `ChanceToNotExist` ve sistem `flags` bitinin `0x800` değeri, ki bu importance `3` ve `4` dışında her şeyi söker.
+
+`rate`, `lifetime`, `particleLifetime` ve `particleLinger` ekran görüntüleriyle [Emitter Library](/docs/lol/assets-library/emitter-library) sayfasında gösteriliyor.
+
+---
+
+## Yayıcı: yayma ve zamanlama
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `rate` | `ValueFloat` | Saniyede yayılan partikül. `isSingleParticle` olan bir yayıcıda bunun yerine partikül **sayısını** belirler |
+| `flexRate` | `pointer` | Oran için flex geçersiz kılma |
+| `rateByVelocityFunction` | `ValueVector2` | Oranı yayıcının hareket hızına göre ölçekler |
+| `MaximumRateByVelocity` | `option[f32]` | Yukarıdaki için üst sınır |
+| `timeBeforeFirstEmission` | `f32` | Herhangi bir şey doğmadan önceki gecikme. Bir sistemi aşamalara yaymak için işe yarar |
+| `period` | `option[f32]` | Bir yayma döngüsünün uzunluğu |
+| `timeActiveDuringPeriod` | `option[f32]` | Her `period` içinde yayıcının gerçekte ne kadar yaydığı |
+| `ChanceToNotExist` | `f32` | Yayıcının doğuşta tamamen atlanma olasılığı |
+| `SpawnShape` | `pointer` | Partiküllerin içinde doğduğu hacmi veren bir `IVfxShape` |
+| `FlexShapeDefinition` | `pointer` | Doğum şeklinin flex varyantı |
+| `emissionSurfaceDefinition` | `pointer` | Hacim yerine bir yüzey üzerinde doğma |
+| `emissionMeshName` | `string` | Yayma şekli olarak kullanılan bir mesh |
+| `emissionMeshScale` | `f32` | O yayma mesh'ini ölçekler |
+
+<Callout
+  type="info"
+  title="period ve timeActiveDuringPeriod patlamalar böyle yapılır"
+>
+  `period` değerini döngü uzunluğuna, `timeActiveDuringPeriod` değerini daha kısa
+  bir değere ayarla; yayıcı sürekli çalışmak yerine nabız gibi atar. İkisini de
+  boş bırakmak düzenli bir akış verir.
+</Callout>
+
+---
+
+## Yayıcı: yerleşim ve yönelim
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `EmitterPosition` | `ValueVector3` | Partiküllerin yayıcının orijinine göre nerede doğduğu. Pozitif Y yukarıdır |
+| `translationOverride` | `vec3` | Yayıcıyı bir bütün olarak kaydırır |
+| `rotationOverride` | `vec3` | Yayıcıyı bir bütün olarak döndürür |
+| `scaleOverride` | `vec3` | Yayıcıyı bir bütün olarak ölçekler |
+| `FlexInstanceScale` | `pointer` | Örnek ölçeği için flex geçersiz kılma |
+| `bindWeight` | `ValueFloat` | Partikülün bağlı olduğu şeyi ne kadar takip ettiği. `1` tamamen takip eder, `0` onu dünya uzayında geride bırakır |
+| `postRotateOrientationAxis` | `vec3` | `hasPostRotateOrientation` açıkken kullanılan eksen |
+| `offsetLifetimeScaling` | `vec3` | Partikülün **ömrünü**, yayıcıdan ne kadar uzakta doğduğuna göre eksen bazında ölçekler |
+| `offsetLifeScalingSymmetryMode` | `u8` | Yukarıdaki için simetri modu |
+
+<Callout type="info" title="EmitterPosition mı translationOverride mı?">
+  `EmitterPosition` partiküllerin yayıcı içinde nerede doğduğunu taşır.
+  `translationOverride` yayıcıyı bir bütün olarak kaydırır. Bir yayıcı yanlış
+  yerdeyse ikincisini, aksi halde doğru olan bir yayıcının içinde partiküller
+  yanlış yerdeyse birincisini kullan.
+</Callout>
+
+---
+
+## Yayıcı: doğum özellikleri
+
+Partiküle doğduğu anda verilen durum. `birth*` adını taşıyan her şey bir başlangıç koşuludur, süregelen bir koşul değil.
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `birthColor` | `ValueColor` | Başlangıç rengi, RGBA |
+| `birthScale0` | `ValueVector3` | Başlangıç boyutu |
+| `birthRotation0` | `ValueVector3` | Başlangıç dönüşü |
+| `birthRotationalVelocity0` | `ValueVector3` | Başlangıç dönme hızı |
+| `birthRotationalAcceleration` | `ValueVector3` | Başlangıç dönme ivmesi |
+| `birthVelocity` | `ValueVector3` | Başlangıç hızı |
+| `birthAcceleration` | `ValueVector3` | Başlangıç ivmesi |
+| `birthDrag` | `ValueVector3` | Başlangıç drag'i |
+| `birthOrbitalVelocity` | `ValueVector3` | Yörünge dönüşü. Aşağıdaki uyarıya bak |
+| `birthFrameRate` | `ValueFloat` | Animasyonlu bir doku için başlangıç oynatma hızı |
+| `birthUVOffset` | `ValueVector2` | Doku içindeki başlangıç kayması. Aynı sayfayı paylaşan partikülleri senkronize olmaktan çıkarmak için işe yarar |
+| `birthUvScrollRate` | `ValueVector2` | Başlangıç UV kaydırma hızı |
+| `birthUvRotateRate` | `ValueFloat` | Başlangıç UV dönüş hızı |
+
+Bunların her birinin bir `flex*` kardeşi vardır (`flexBirthVelocity`, `flexBirthUVOffset`, `flexScaleBirthScale` ve benzeri) ve bir flex değeri verildiğinde onu geçersiz kılar.
+
+<Callout type="warning" title="birthOrbitalVelocity hiç hız eklemez">
+  Adına rağmen bu, **partikülün hızına hiçbir şey katmaz**. Yalnızca dönüşümle
+  ilgilidir: partikülün kendi matrisini döndürürken saklanan konumu yalnızca
+  `birthVelocity` ve kuvvetlerle ilerlemeye devam eder.
+
+Bir partikülün ne kadar yol aldığı üzerine düşünüyorsan bu önemlidir. Bunu dönüşün
+üzerine eklenen teğetsel bir hız gibi ele almak hareketi iki kez sayar ve yol
+uzunluğunu tam olarak iki katına çıkarır.
+
+</Callout>
+
+---
+
+## Yayıcı: ömür boyunca hareket
+
+`birth*` başlangıç durumunu belirlerken bunlar etki etmeye devam eder.
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `velocity` | `ValueVector3` | Partikülün ömrü boyunca hız |
+| `acceleration` | `ValueVector3` | Ömür boyunca ivme |
+| `worldAcceleration` | `IntegratedValueVector3` | Partikülün yöneliminden bağımsız olarak dünya uzayında ivme. Yerçekimi negatif Y olarak burada yaşar |
+| `drag` | `ValueVector3` | Ömür boyunca drag |
+| `scale0` | `ValueVector3` | Ömür boyunca ölçek, `birthScale0` ile çarpılır |
+| `rotation0` | `IntegratedValueVector3` | Ömür boyunca dönüş |
+| `directionVelocityScale` | `f32` | Partikülün hızla birlikte hareket yönünde ne kadar uzadığı. `isDirectionOriented` ile kullanılır |
+| `directionVelocityMinScale` | `f32` | Bu uzamanın alt sınırı |
+| `fieldCollectionDefinition` | `pointer` | Kuvvet alanları. Bak [Kuvvet alanları](#kuvvet-alanları) |
+
+---
+
+## Yayıcı: renk
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `birthColor` | `ValueColor` | Doğuştaki renk |
+| `Color` | `ValueColor` | Partikülün ömrü boyunca renk, `birthColor` ile çarpılır. Varsayılan beyaz |
+| `colorLookUpTypeX` / `colorLookUpTypeY` | `u8` | `particleColorTexture` okumasının her eksenini neyin sürdüğü, örneğin partikülün yaşı |
+| `colorLookUpScales` | `vec2` | Bu okuma koordinatlarına uygulanan ölçek. Varsayılan `1, 1` |
+| `colorLookUpOffsets` | `vec2` | Bu okuma koordinatlarına uygulanan kayma |
+| `colorRenderFlags` | `u8` | Rengin render sırasında nasıl uygulandığını etkileyen bit bayrakları |
+| `modulationFactor` | `vec4` | Nihai renge uygulanan modülasyon |
+| `censorModulateValue` | `vec4` | İçerik bir bölge için sansürlendiğinde kullanılan renk |
+| `paletteDefinition` | `pointer` | Bir `VfxPaletteDefinitionData`. Bak [Palet](#palet) |
+| `colorblindVisibility` | `u8` | `0` her zaman görünür, `1` yalnızca normal modda, `2` yalnızca renk körü modunda |
+
+### Bir RGBA değeri okumak
+
+```rust
+birthColor: embed = ValueColor {
+    constantValue: vec4 = { 1, 0.7059, 0, 1 }
+}
+```
+
+Kanallar `0` ile `255` yerine `0` ile `1` arasındadır. Dönüştürmek için 255'e böl. Yukarıdaki yeşil kanal `180`, ve `180 / 255` sonucu `0.7059` verir.
+
+Dördüncü değer alfadır; **`0` tamamen saydam, `1` tamamen opaktır**.
+
+Pratikte yeniden renklendirme için [Quartz](/docs/lol/tools/modding-apps/quartz) hesabı senin yerine yapar.
+
+---
+
+## Yayıcı: doku ve UV
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `texture` | `string` | Yayıcının çizdiği `.dds` ya da `.tex`. Bak [File Formats](/docs/lol/vfx-bins/file-formats) |
+| `particleColorTexture` | `string` | Partikülleri renklendirmek için örneklenen gradyan, genelde ömürleri boyunca. `colorLookUp*` alanlarıyla nişanlanır |
+| `falloffTexture` | `string` | Sönümlenme rampası dokusu |
+| `textureMult` | `pointer` | Bir `VfxTextureMultDefinitionData`, **düz bir string değil**. Bak [Texture mult](#texture-mult) |
+| `texDiv` | `vec2` | Dokuyu bir ızgaraya böler, sayfa animasyonu için |
+| `startFrame` | `u16` | Animasyonlu bir sayfanın ilk karesi |
+| `numFrames` | `u16` | Sayfanın kaç kare tuttuğu |
+| `frameRate` | `f32` | O karelerin ne hızda oynadığı |
+| `uvMode` | `u8` | UV koordinatlarının nasıl yorumlandığı |
+| `texAddressModeBase` | `u8` | Temel doku için sarma, clamp ya da ayna |
+| `uvRotation` | `ValueFloat` | Dokuyu döndürür |
+| `uvScale` | `ValueVector2` | Dokuyu ölçekler |
+| `uvTransformCenter` | `vec2` | UV dönüşü ve ölçeği için pivot |
+| `uvParallaxScale` | `f32` | UV'lerdeki paralaks miktarı |
+| `emitterUvScrollRate` | `vec2` | Yayıcı başına uygulanan kaydırma hızı |
+| `particleUVScrollRate` | `IntegratedValueVector2` | Partikül başına uygulanan kaydırma hızı |
+| `particleUVRotateRate` | `IntegratedValueFloat` | Partikül başına uygulanan dönüş hızı |
+| `isTexturePixelated` | `bool` | Yumuşak filtreleme yerine en yakın komşu örnekleme |
+
+<Callout type="info" title="Düz bir scrollRate yok">
+  Kaydırma her zaman neyi etkilediğine göre daraltılmıştır. Modern yayıcıda
+  alanlar `birthUvScrollRate`, `emitterUvScrollRate` ve `particleUVScrollRate`.
+  Çıplak bir `uvScrollRate` yalnızca [Legacy bileşen
+  modeli](#legacy-bileşen-modeli) bölümünde anlatılan legacy sınıfta bulunur.
+</Callout>
+
+---
+
+## Yayıcı: render durumu
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `blendMode` | `u8` | Partikülün arkasındakiyle nasıl karıştığı. Tam tablo aşağıda |
+| `miscRenderFlags` | `u8` | Derinlik ve karışım durumu bitleri. Aşağıdaki uyarıya bak |
+| `meshRenderFlags` | `u8` | Mesh primitifleri için render bayrakları |
+| `colorRenderFlags` | `u8` | Rengi etkileyen render bayrakları |
+| `pass` | `i16` | Çizim sırası. Düşük olan önce çizilir ve altta kalır |
+| `renderPhaseOverride` | `u8` | Yayıcıyı belirli bir render fazına zorlar. Varsayılan `7`, yani geçersiz kılma yok |
+| `depthBiasFactors` | `vec2` | Eş düzlemli yüzeylerin çakışmaması için derinliği hafifçe iter |
+| `DepthPushPull` | `f32` | Partikülü derinlik boyunca iter ya da çeker. Varsayılan `0`. Shader buna `PARTICLE_DEPTH_PUSH_PULL` diyor |
+| `alphaRef` | `u8` | Alfa test eşiği, `0` ile `255`. Altında kalan pikseller atılır. Varsayılan `5` |
+| `stencilMode` | `u8` | Stencil davranışı |
+| `stencilRef` | `u8` | Stencil referans değeri |
+| `StencilReferenceId` | `hash` | Adlandırılmış stencil referansı |
+| `disableBackfaceCull` | `bool` | Her yüzün iki tarafını da çizer |
+| `softParticleParams` | `pointer` | Bir `VfxSoftParticleDefinitionData`. Bak [Soft particles](#soft-particles) |
+| `sliceTechniqueRange` | `f32` | Slice tekniğinin menzili |
+| `CustomMaterial` | `pointer` | Varsayılan materyalin yerine geçen bir `VfxMaterialDefinitionData` |
+| `materialOverrideDefinitions` | `list[embed]` | Bu yayıcı için materyal bazlı geçersiz kılmalar |
+| `Filtering` | `pointer` | Yayıcının nerede görünmesine izin verildiğini kontrol eden bir `VfxEmitterFiltering` |
+| `Audio` | `pointer` | Bir `VfxEmitterAudio` |
+
+### blendMode değerleri
+
+Bunlar sabittir ve her primitif için aynıdır. Her mod bir kaynak ve hedef karışım faktörü ile bir karışım işlemi seçer.
+
+| Mod | Src | Dest | İşlem | Derinlik yazar | Karışım |
+| :-- | :-- | :--- | :---- | :------------- | :------ |
+| `0` | ONE | ONE | ADD | hayır | evet |
+| `1` | SRC_ALPHA | INV_SRC_ALPHA | ADD | hayır | evet |
+| `2` | ZERO | INV_SRC_COLOR | ADD | hayır | evet |
+| `3` | | | | **evet** | **hayır** |
+| `4` | SRC_ALPHA | ONE | ADD | hayır | evet |
+| `5` | ONE | INV_SRC_ALPHA | ADD | hayır | evet |
+| `6` | ONE | ONE | MIN | hayır | evet |
+| `7` | ONE | ONE | MAX | hayır | evet |
+| `8` | INV_DEST_ALPHA | DEST_ALPHA | ADD | hayır | evet |
+
+Bu tabloyu pratikte okumak:
+
+- `0` ve `4` **toplamalı** modlardır. Siyah hiçbir şey katmaz, dolayısıyla siyaha doğru yeniden renklendirmek için güvenli olanlar bunlardır.
+- `1` standart **alfa karışımıdır**, "normal" denilen şeye en yakın olan.
+- `2` **karartır**, çünkü kaynak rengin tersiyle çarpar.
+- `3` **opak** moddur. Derinlik yazan tek mod ve hiç karıştırmayan tek mod odur.
+- `6` ve `7` toplamak yerine kaynak ile hedefin **minimum** ya da **maksimum** değerini alır.
+
+<Callout type="warning" title="miscRenderFlags bit 0 derinlik testini kapatır, ters olarak">
+  Bit `0`, depth-stencil durumundaki `DepthEnable` değerine karşılık gelir ve
+  **terstir**: bit **açıkken** derinlik testi **kapalıdır**. `miscRenderFlags`
+  değerini `1` yapmak, bir partikülün geometrinin içinden çizilmesini sağlayan
+  şeydir.
+
+Bu bir yüz ters çevirme bayrağı değildir ve `4` değerinin testi açık bırakarak
+derinlik yazmayı kapattığı okuması geçerli değildir. Derinlik **yazımına**
+`blendMode` karar verir ve yalnızca mod `3` onu açar.
+
+Kullanılan karşılaştırma `LESS` değil `LESS_EQUAL`'dir; eş düzlemli bir yer
+decal'ının çizilebilmesini sağlayan da budur.
+
+</Callout>
+
+---
+
+## Yayıcı bayrakları
+
+Yayıcıda dört bayt, her biri sekize kadar adlandırılmış bit taşır. Metin araçları onları `flag` olarak tek tek gösterir.
+
+| Bayrak | Ne yapar |
+| :----- | :------- |
+| `TextureFlipU` / `TextureFlipV` | Dokuyu her eksende aynalar |
+| `particleIsLocalOrientation` | Partikül yönelimi yerel uzayda okunur |
+| `isLocalOrientation` | Yayıcı yönelimi yerel uzayda okunur |
+| `isDirectionOriented` | Partiküller hareket yönleri boyunca yönelir |
+| `isUniformScale` | Ölçek tüm eksenler için tek bir değere kilitlenir |
+| `hasPostRotateOrientation` | Dönüşten sonra `postRotateOrientationAxis` uygular |
+| `isRandomStartFrame` | Her partikül sayfanın rastgele bir karesinde başlar |
+| `doesCastShadow` | Yayıcı gölgelere katkıda bulunur |
+| `isRotationEnabled` | Dönüşü tümden etkinleştirir |
+| `uvScrollClamp` | UV kaydırmayı sarmak yerine clamp'ler |
+| `isFollowingTerrain` | Partiküller arazi yüksekliğini takip eder |
+| `isGroundLayer` | Yer katmanı olarak çizer |
+| `useEmissionMeshNormalForBirth` | Partiküller yayma mesh'inin normalleri boyunca fırlar |
+| `useNavmeshMask` | Efekti araziye karşı maskeler, böylece duvarların üzerine taşmaz |
+| `ParticlesShareRandomValue` | Tüm partiküller aynı rastgele değeri çeker |
+| `SortEmittersByPos` | Yayıcıları konuma göre sıralar |
+| `IsEmitterSpace` | Partiküller dünya uzayı yerine yayıcı uzayında simüle edilir |
+| `HasVariableStartTime` | Başlangıç zamanı partikül başına değişir |
+| `isSingleParticle` | Akış yerine tam olarak tek bir partikül |
+| `doesParticleLifetimeScale` | Partikül ömrü sistemle birlikte ölçeklenir |
+| `doesLifetimeScale` | Yayıcı ömrü sistemle birlikte ölçeklenir |
+| `WriteAlphaOnly` | Yalnızca alfa kanalını yazar |
+
+---
+
+## Primitifler
+
+`primitive`, her partikülün ne çizdiğine karar veren bir işaretçidir. Boş bırakmak varsayılan kameraya dönük billboard quad'ı verir.
+
+| Sınıf | Ne çizer |
+| :---- | :------- |
+| `VfxPrimitiveCameraQuad` | Her zaman kameraya dönük düz bir quad. Varsayılan ve karşılaşacağın partiküllerin çoğu |
+| `VfxPrimitiveCameraUnitQuad` | Birim boyutta kameraya dönük bir quad |
+| `VfxPrimitiveArbitraryQuad` | Kameraya dönmeyen, sabit yönelimli bir quad |
+| `VfxPrimitiveMesh` | Bir mesh |
+| `VfxPrimitiveAttachedMesh` | Bir kemiğe bağlı mesh. `UseAvatarSpecificSubmeshMask` ekler |
+| `VfxPrimitiveCameraTrail` | Kameraya dönük bir iz |
+| `VfxPrimitiveArbitraryTrail` | Sabit yönelimli bir iz |
+| `VfxPrimitiveRibbon` | Bir şerit |
+| `VfxPrimitiveBeam` | İki nokta arasında bir ışın |
+| `VfxPrimitiveCameraSegmentBeam` | Kameraya dönük, parçalı bir ışın |
+| `VfxPrimitiveCameraSegmentSeriesBeam` | Parçalı ışın serisi |
+| `VfxPrimitiveLaser` | Bir lazer |
+| `VfxPrimitivePlanarProjection` | Dokuyu bir düzleme yansıtır. Yer decal'ları |
+| `VfxPrimitiveRay` | Bir ışın |
+| `VfxPrimitiveNonRenderable` | Hiçbir şey çizmez. Yalnızca çocuk doğurmak ya da mantık sürmek için var olan yayıcılarda kullanılır |
+
+### Mesh alanları
+
+Mesh primitifleri `mMesh` içinde bir `VfxMeshDefinitionData` taşır. `m` ön eklerine dikkat: bunlar yayıcının kendi alanları gibi yazılmaz.
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `mMeshName` | `string` | Çizilecek mesh |
+| `mMeshSkeletonName` | `string` | Animasyonlu bir mesh için iskelet |
+| `mSimpleMeshName` | `string` | Basit bir `.scb` ya da `.sco` mesh |
+| `mSubmeshesToDraw` | `list[string]` | Hangi submesh'lerin render edildiği |
+| `mSubmeshesToDrawAlways` | `list[string]` | Her zaman render edilen submesh'ler |
+| `mLockMeshToAttachment` | `bool` | Mesh'i bağlantı noktasına kilitler |
+| `mAnimationName` | `string` | Mesh üzerinde oynatılacak animasyon |
+| `mAnimationVariants` | `list[string]` | Alternatif animasyonlar |
+
+Mesh primitifleri ayrıca `VfxPrimitiveMeshBase` üzerinde `AlignPitchToCamera` ve `AlignYawToCamera` taşır.
+
+### Mesh dosya tipleri
+
+| Uzantı | Ne olduğu |
+| :----- | :-------- |
+| `.scb` | Statik mesh, ikili |
+| `.sco` | Statik mesh, ASCII metin, joint ve materyal taşır |
+| `.skn` | Rig'li mesh, şampiyon modelleri için standart |
+| `.skl` | Bir `.skn` ile eşleşen iskelet |
+
+Bir partikül klasöründe `.skn` ve `.skl` çifti animasyonlu bir mesh demektir. Bak [Meshes as Particles](/docs/lol/vfx-bins/meshes-as-particles).
+
+### İz ve şerit
+
+`VfxPrimitiveTrailBase`, `mTrail` içinde bir `VfxTrailDefinitionData` taşır:
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `mBirthTilingSize` | `ValueVector3` | Doğumdaki döşeme boyutu |
+| `mCutoff` | `f32` | İzin uzatılmayı bıraktığı yay uzunluğu |
+| `mMaxAddedPerFrame` | `i32` | Kare başına eklenen nokta sınırı |
+| `mSmoothingMode` | `u8` | İz boyunca uygulanan yumuşatma |
+| `mMode` | `u8` | İz modu |
+
+`VfxRibbonDefinitionData`, `birthTilingSize` değerini `ValueVector2` olarak taşır.
+
+---
+
+## Alt tanım sınıfları
+
+Bunların her biri yayıcıdaki bir işaretçiye asılır. **Boş olması özelliğin tamamen kapalı olduğu anlamına gelir.**
+
+### Texture mult
+
+`VfxTextureMultDefinitionData`. Temel dokunun üzerine çarpılan ikinci bir doku, bir görsel düzenleyicideki Multiply ile aynı fikir. Yayıcının `textureMult` alanı bu nesneyi işaret eder, asıl dosya adı ise **onun içindeki** `textureMult` string'idir.
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `textureMult` | `string` | Çarpma dokusu |
+| `texDivMult` | `vec2` | Çarpma dokusu için ızgara bölümü |
+| `texAddressModeMult` | `u8` | Sarma modu |
+| `uvScaleMult` | `ValueVector2` | Çarpma UV'lerinde ölçek |
+| `UvRotationMult` | `ValueFloat` | Çarpma UV'lerinde dönüş |
+| `uvTransformCenterMult` | `vec2` | Bu dönüş ve ölçek için pivot |
+| `birthUvScrollRateMult` | `ValueVector2` | Doğumdaki kaydırma hızı |
+| `emitterUvScrollRateMult` | `vec2` | Yayıcı başına kaydırma hızı |
+| `birthUVOffsetMult` | `ValueVector2` | Başlangıç UV kayması |
+| `birthUvRotateRateMult` | `ValueFloat` | Başlangıç UV dönüş hızı |
+| `ParticleIntegratedUvScrollMult` | `IntegratedValueVector2` | Partikül başına kaydırma |
+| `ParticleIntegratedUvRotateMult` | `IntegratedValueFloat` | Partikül başına dönüş |
+
+Bayrak baytı `uvScrollAlphaMult`, `uvScrollClampMult`, `TextureMultFilpU`, `TextureMultFilpV` ve `isRandomStartFrameMult` taşır. Son ikisi motorda gerçekten böyle yazılıyor, yani onları ararken "Flip" değil "Filp" ara.
+
+### Palet
+
+`VfxPaletteDefinitionData`. Düz bir değer kullanmak yerine bir gradyan dokusundan örnekleyerek partikülleri renklendirir.
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `paletteTexture` | `string` | Gradyan görüntüsü |
+| `PaletteTextureAddressMode` | `u8` | Gradyan için sarma modu |
+| `paletteSelector` | `ValueVector3` | Palette nereden örnekleneceği |
+| `palleteSrcMixColor` | `ValueColor` | Örneklenen sonuca karıştırılan renk |
+| `PaletteUAnimationCurve` | `ValueFloat` | U koordinatını animasyonlar |
+| `PaletteVAnimationCurve` | `ValueFloat` | V koordinatını animasyonlar |
+| `paletteCount` | `i32` | Dokudaki palet sayısı |
+
+<Callout type="info" title="Palette mi Pallete mi?">
+  Sınıf ve alanların çoğu doğru yazımı kullanır. Motorun kendi yazım hatası tam
+  olarak tek bir alanda hayatta kalıyor: `palleteSrcMixColor`. Yani bir binde
+  "pallete" aramak neredeyse her şeyi kaçırır. "palette" ara.
+</Callout>
+
+### Alfa erozyonu
+
+`VfxAlphaErosionDefinitionData`. Partikülü bir harita kullanarak çözer. Neredeyse her yanıp yok olma ya da silinme efekti böyle kurulur.
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `erosionMapName` | `string` | Erozyon dokusu |
+| `erosionMapAddressMode` | `u8` | Harita için sarma modu |
+| `erosionMapChannelMixer` | `ValueColor` | Haritanın hangi kanallarının, ne oranda kullanıldığı |
+| `erosionDriveCurve` | `ValueFloat` | Erozyonun nasıl ilerlediği |
+| `erosionDriveSource` | `u8` | Onu neyin sürdüğü, örneğin partikülün yaşı |
+| `erosionFeatherIn` / `erosionFeatherOut` | `f32` | Sınırın her kenarındaki yumuşaklık |
+| `erosionSliceWidth` | `f32` | Aşınan bandın genişliği |
+| `LingerErosionDriveCurve` | `ValueFloat` | Oyalanma sırasında kullanılan ayrı bir eğri |
+| `UseLingerErosionDriveCurve` | `bool` | O ayrı eğriyi etkinleştirir |
+
+Bir erozyon haritası genelde gri tonlamadır; beyaz önce aşınır, siyah en son. Çok kanallı haritalar her renk kanalında bağımsız bir desen taşır ve `erosionMapChannelMixer` aralarından seçer.
+
+### Distorsiyon
+
+`VfxDistortionDefinitionData`. Partikülün arkasında çizileni büker. Şok dalgaları ve sıcaklık titremesi.
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `normalMapTexture` | `string` | Distorsiyonu süren normal map |
+| `distortion` | `f32` | Şiddet |
+| `distortionMode` | `u8` | Hangi distorsiyon modunun kullanıldığı |
+
+### Yansıma ve fresnel
+
+`VfxReflectionDefinitionData`. Kenar parlaması ve yansıma bloğu. `fresnel` yayıcıda değil burada yaşar.
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `reflectionMapTexture` | `string` | Yansıma haritası |
+| `reflectionOpacityDirect` | `f32` | Karşıdan bakışta yansıma şiddeti |
+| `reflectionOpacityGlancing` | `f32` | Sıyırma açılarında yansıma şiddeti |
+| `reflectionFresnel` | `f32` | Yansıma için fresnel terimi |
+| `reflectionFresnelColor` | `vec4` | O terimin rengi |
+| `fresnel` | `f32` | Fresnel şiddeti, sıyırma açılarındaki kenar parlaması |
+| `fresnelColor` | `vec4` | O kenar parlamasının rengi |
+
+### Soft particles
+
+`VfxSoftParticleDefinitionData`. Bir partikülün geometriyle kesiştiği sert dikişi yumuşatır.
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `beginIn` | `f32` | İçeri doğru solmanın başlamasından önceki kayma |
+| `beginOut` | `f32` | Dışarı doğru solmanın başlamasından önceki kayma |
+| `deltaIn` | `f32` | İçeri doğru solmanın kapsadığı mesafe |
+| `deltaOut` | `f32` | Dışarı doğru solmanın kapsadığı mesafe |
+
+İki solmadan hangisinin uygulanacağını seçen beşinci bir mod baytı var. Boş bir `softParticleParams` işaretçisi özelliği tamamen kapatır, ayrı bir açma/kapama alanı yoktur.
+
+### Linger
+
+`VfxLingerDefinitionData`. Kaldırılmayı sadece geciktirmek yerine oyalanma aşamasında partikülü değiştirir.
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `LingerRotation` | `ValueVector3` | Oyalanma sırasında uygulanan dönüş |
+| `LingerScale` | `ValueVector3` | Oyalanma sırasında uygulanan ölçek |
+| `KeyedLingerVelocity` | `ValueVector3` | Oyalanma sırasında hız |
+| `KeyedLingerAcceleration` | `ValueVector3` | Oyalanma sırasında ivme |
+| `KeyedLingerDrag` | `ValueVector3` | Oyalanma sırasında drag |
+| `SeparateLingerColor` | `ValueColor` | Oyalanma sırasında farklı bir renk |
+
+Her birinin eşleşen bir `Use*` bayrağı var: `UseLingerRotation`, `UseLingerScale`, `UseKeyedLingerVelocity`, `UseKeyedLingerAcceleration`, `UseKeyedLingerDrag` ve `UseSeparateLingerColor`. Bayrağı olmadan değeri yazmak hiçbir şey yapmaz.
+
+### Materyaller ve sürücüler
+
+`VfxMaterialDefinitionData` bir `Material` bağlantısı ve bir `materialDrivers` haritası tutar. Sürücüler bir materyal parametresini sabit tutmak yerine animasyonlar.
+
+| Sınıf | Ne yapar |
+| :---- | :------- |
+| `VfxColorOverLifeMaterialDriver` | Partikülün ömrü boyunca bir rengi sürer |
+| `VfxFloatOverLifeMaterialDriver` | Ömür boyunca tek bir float'ı sürer |
+| `VfxSineMaterialDriver` | Bir değeri sinüs dalgasında salındırır, nabız etkisi için |
+
+Glow ve toon shader işleri için bak [Static Materials](/docs/lol/vfx-bins/static-materials).
+
+---
+
+## Kuvvet alanları
+
+`VfxFieldCollectionDefinitionData`, yayıcının `fieldCollectionDefinition` alanı üzerinden erişilir. `birthVelocity` bir partikülü harekete geçirirken bir alan ona etki etmeye devam eder.
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `fieldAccelerationDefinitions` | `list[embed]` | Sabit ivme, örneğin yerçekimi |
+| `fieldAttractionDefinitions` | `list[embed]` | Partikülleri bir noktaya çeker |
+| `fieldDragDefinitions` | `list[embed]` | Partikülleri yavaşlatır |
+| `fieldNoiseDefinitions` | `list[embed]` | Türbülans ekler |
+| `fieldOrbitalDefinitions` | `list[embed]` | Partikülleri bir eksen etrafında döndürür |
+
+## Yayma şekilleri
+
+`SpawnShape` bir `IVfxShape` işaret eder.
+
+| Sınıf | Ne yapar |
+| :---- | :------- |
+| `VfxShapeSphere` | Bir küre içinde doğma, bir `radius` ile |
+| `VfxShapeBox` | Bir kutu içinde doğma |
+| `VfxShapeCylinder` | Bir silindir içinde doğma |
+| `VfxShapeVolume` | Ortak hacim davranışı, kendi `flags` değerini taşır |
+| `VfxShapeLegacy` | Daha eski şekil sistemi, birçok efektte hâlâ var |
+
+`VfxEmissionMeshData` bir mesh'ten doğmayı yönetir; `meshName`, `skeletonName`, `AnimationName`, `meshScale`, `maxJointWeights`, `Submeshes` ve `useSurfaceNormalForBirthPhysics` ile.
+
+---
+
+## Çocuk partiküller
+
+`VfxChildParticleSetDefinitionData`, yayıcının `childParticleSetDefinition` alanı üzerinden erişilir. Bir izin kıvılcım saçması ya da bir patlamanın enkaz fırlatması böyle olur.
+
+| Özellik | Tip | Ne yapar |
+| :------ | :-- | :------- |
+| `childrenIdentifiers` | `list[embed]` | Doğurulacak çocuk sistemler, `VfxChildIdentifier` girdileri olarak |
+| `boneToSpawnAt` | `list[string]` | Çocukların doğduğu kemikler |
+| `childrenProbability` | `ValueFloat` | Bir çocuğun doğma ihtimali |
+| `childEmitOnDeath` | `bool` | Çocuğu, ebeveyn partikül doğduğunda değil öldüğünde doğur |
+| `ParentInheritanceDefinition` | `pointer` | Çocuğun neyi miras aldığına karar veren bir `VfxParentInheritanceParams` |
+
+`VfxChildIdentifier` içinde `effect` (bir bağlantı), `effectKey` (bir hash) ve `effectName` (bir string) bulunur.
+
+`VfxParentInheritanceParams` içinde `Mode` ve `RelativeOffset` bulunur. Bu kayma, çocuğun kendi `EmitterPosition` değerinden ayrı, tam anlamıyla ebeveyne göreli bir kanaldır.
+
+<Callout type="warning" title="Çocuklar bir kez, doğumda doğar">
+  Ebeveynden çocuğa sürekli bir besleme yoktur. Bir çocuk sistem **tam olarak bir
+  kez, onu taşıyan partikülün doğduğu anda** oluşturulur ve o andan itibaren kendi
+  saatinde bağımsız bir sistem olarak çalışır. Tek sökülme, taşıyıcı partikülün
+  ölmesidir.
+
+Bilmeye değer bir sonuç: `isSingleParticle` olan bir taşıyıcı için tam olarak tek
+bir partikül ve dolayısıyla tam olarak tek bir çocuk oluşturma vardır ve
+ebeveynin yayma penceresinin kapanması bunu durduramaz.
+
+</Callout>
+
+<Callout type="info" title="Miras bir moddur, sabit bir zincir değil">
+  Bir çocuğun ebeveyninden neyi miras aldığına `VfxParentInheritanceParams`
+  üzerindeki `Mode` değeri karar verir. Hiçbir `ParentInheritanceDefinition`
+  yazılmadığında çocuk varsayılan modda çalışır. Sabit bir miras kümesi varsayan
+  her zihinsel model varsayılan için doğru, gerisi için yanlış olur.
+
+Çocuk sistemler iç içe geçer ve motor onları derinlik öncelikli dolaşır, yani üç
+seviyeli bir iç içe geçme her seviyede birleşir.
+
+</Callout>
+
+Sık görülen bir kalıp, `VfxPrimitiveNonRenderable` kullanan bir ebeveyn yayıcıdır: hiçbir şey çizmez ve yalnızca çocuklarını yerleştirmek için vardır.
+
+---
+
+## Legacy bileşen modeli
+
+Daha eski efektler, motorda hâlâ gelen ikinci bir bileşen tabanlı yayıcı modeli kullanır. Uzun süredir var olan şampiyonlarda karşına çıkacak. Burada onu tanıyabilmen için belgelendi, yeni işleri onunla yazasın diye değil.
+
+| Sınıf | Boyut | Rolü |
+| :---- | :---- | :--- |
+| `VfxEmitterLegacySimple` | 13 alan | Basit legacy yayıcı, yayıcının `LegacySimple` işaretçisi üzerinden erişilir |
+| `VfxLegacyRenderComponent` | 66 alan | Legacy render durumu |
+| `VfxLegacyPhysicsComponent` | 37 alan | Legacy hareket ve yerleşim |
+| `VfxLegacyLifetimeComponent` | 17 alan | Legacy zamanlama |
+| `VfxLegacyGeometryComponent` | 1 alan | Legacy geometri |
+
+Birçok isim her iki modelde de görünür. `blendMode`, `texture`, `bindWeight`, `birthVelocity`, `particleLifetime` ve diğerleri modern yayıcıda **ve** bir legacy bileşende, farklı offsetlerde bulunur. Bir değer etkisiz görünüyorsa, aslında hangisini düzenlediğine bak.
+
+Üç isim **yalnızca** legacy modelde bulunur:
+
+| Özellik | Tip | Nerede yaşar |
+| :------ | :-- | :----------- |
+| `uvScrollRate` | `vec2` | `VfxEmitterLegacySimple` |
+| `particleBind` | `vec2` | `VfxEmitterLegacySimple` |
+| `lockedToEmitter` | `bool` | `VfxEmitterLegacySimple` |
+
+`VfxEmitterLegacySimple` ayrıca `birthScale`, `scale`, `birthRotation`, `birthRotationalVelocity`, `rotation`, `scaleBias`, `orientation`, `fixedOrbitType`, `hasFixedOrbit` ve `scaleUpFromOrigin` taşır. Buradaki soneksiz `birthScale` ve `birthRotation` ile modern yayıcıdaki `birthScale0` ve `birthRotation0` arasındaki farka dikkat et.
+
+`LegacySimple` işaretçisi, sistemin `simpleEmitterDefinitionData` listesindeki yayıcıların kullandığı şeydir. Bir sistem `complexEmitterDefinitionData` yerine o listeyi dolduruyorsa, yayıcılarının okuduğu blok budur.
+
+### Yayıcının kaybettiği özellikler
+
+Dört yayıcı özelliği emekliye ayrıldı ve artık yalnızca eski binlerde ya da eski dokümantasyonda karşına çıkar.
+
+| Özellik | Kaldırıldığı sürüm | Yerine geçen |
+| :------ | :----------------- | :----------- |
+| `shape` | 14.1 | `SpawnShape` |
+| `Material` | 14.1 | `CustomMaterial` ve `materialOverrideDefinitions` |
+| `materialDrivers` | 14.1 | `VfxMaterialDefinitionData` üzerindeki `materialDrivers` haritası |
+| `flexOffset` | 15.11 | Doğrudan bir karşılığı yok |
+
+`assetCategory`, `VfxSystemDefinitionData` üzerinden 14.15'te kaldırıldı.
+
+---
+
+## Kolayca yanlış anlaşılan şeyler
+
+En çok zaman kaybettiren yanlış okumaların kısa bir listesi.
+
+| Varsayım | Gerçekte doğru olan |
+| :------- | :------------------ |
+| `birthScale0` ve `birthScale1` bir min-maks çiftidir | `birthScale1` diye bir şey yok. `0` bir isimlendirme kalıntısı, rastgelelik ise `probabilityTables` üzerinden gelir |
+| `probabilityTables` bir kümeden bir değer seçer | `constantValue` değerini bir rastgele çekilişle çarpar, partikül başına bir kez |
+| `birthOrbitalVelocity` yörüngesel hareket ekler | Yalnızca dönüşümle ilgilidir ve hiç hız katmaz |
+| `miscRenderFlags` yüzleri ters çevirir | Bit `0` derinlik testini ters mantıkla kapatır, yani `1` test kapalı demektir |
+| `blendMode` anlamları primitife göre değişir | Karışım durumu her primitif için aynıdır. Yalnızca mod `3` derinlik yazar |
+| `textureMult` bir dosya adıdır | Koca bir tanım sınıfına işaretçidir. Dosya adı onun içindeki bir alandır |
+| `mEyeCandy` bir yayıcı ayarıdır | Sistemdedir |
+| Düz bir `scrollRate` vardır | Yalnızca daraltılmış varyantlar vardır, artı yalnızca legacy olan bir `uvScrollRate` |
+| Bir soft particle açma/kapama alanı vardır | Boş bir `softParticleParams` işaretçisi anahtardır |
+| `particleLifetime` değerinin `-1` olması sonsuz partikül demektir | "Yayıcı durana kadar yaşa" demektir. Yalnızca `isSingleParticle` ile birlikte kalıcıdır |
+| Eksik bir `particleLinger` sıfır demektir | Varsayılanı `particleLifetime + 10` |
+| Ebeveyn yayıcının penceresi kapanınca çocuk ölür | Çocuk bağımsız bir sistemdir. Kendi yayıcıları tükendiğinde ya da taşıyıcı partikülü kaldırıldığında biter |
+
+---
+
+Bu sayfadaki isimler ve tipler, 16.16 yaması için motorun kayıtlı sınıf düzeninden okundu. Bir özellik eksikse ya da bir açıklama yanlışsa, düzeltmeye değer: bak [Nasıl katkıda bulunulur](/docs/lol/contributing).

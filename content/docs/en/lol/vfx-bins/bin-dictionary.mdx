@@ -1,0 +1,797 @@
+---
+title: "Bin & Particle Dictionary"
+description: "A reference for the properties inside a League of Legends VFX bin, organised by the class each one actually belongs to."
+category: "vfx-bins"
+authors:
+  - name: DAKA
+    url: https://github.com/sxrmss
+---
+
+Every other page in this section teaches you to _do_ something. This one is for the moment you are scrolling a `.py` dump, land on a property you have never seen, and just need to know what it is and where it belongs.
+
+Entries are grouped by the **class that owns them**, because in a bin the same name can appear on more than one class, and knowing which one you are inside decides what the value does.
+
+<Callout type="info" title="Read this next to Ruby">
+  Most of these properties are quicker to understand by moving them than by
+  reading about them. [Ruby](/docs/lol/tools/modding-apps/ruby) previews VFX on
+  any champion and has a bin editor built in, so you can change a value and
+  watch the viewport instead of packing a mod to find out what it did.
+</Callout>
+
+<Callout type="info" title="Where these names come from">
+  Every class, property and type on this page was read from the engine's own
+  registered class layout, checked against patch **16.16**. Field names that no
+  longer exist were removed, and the ones that live on a different class than you
+  might expect are labelled with where they actually are. A handful of behaviours
+  are noted where the runtime does something other than what the property name
+  suggests.
+
+You can find the structural data from here
+[lol-meta-classes](https://github.com/LeagueToolkit/lol-meta-classes). You can
+also find documentation about the meta classes and properties at
+[lol-meta-wiki](https://meta-wiki.leaguetoolkit.dev/).
+
+</Callout>
+
+---
+
+## How to read a bin
+
+A VFX bin is a tree. The spine looks like this:
+
+```
+VfxSystemDefinitionData              one complete effect, e.g. a recall or a Q
+└── complexEmitterDefinitionData     the list of emitters the system owns
+    └── VfxEmitterDefinitionData     one emitter: a trail, a flash, some sparks
+        ├── primitive                what each particle draws as
+        └── *Definition pointers     erosion, palette, distortion, children, ...
+```
+
+`VfxSystemDefinitionData` is the container. A property that is not inside the system playing during an ability will not show up during that ability.
+
+The emitter is where most of your time goes. It carries 135 registered fields on its own, and hangs a dozen optional sub-definition objects off pointers. **A null pointer means that whole feature is off**, which is why deleting a block is often the correct way to disable something.
+
+### Value wrappers
+
+Numeric properties are usually wrapped so the engine can hold them constant or vary them:
+
+```rust
+rate: embed = ValueFloat {
+    constantValue: f32 = 20
+}
+```
+
+The wrappers are `ValueFloat`, `ValueColor`, `ValueVector2` and `ValueVector3`. Each holds a `constantValue` plus an optional `dynamics` pointer. They are **two separate fields, not two spellings of one field**: the constant is always there, and `dynamics` is an extra object hanging off it.
+
+| Key                 | Lives on            | What it is                                                                    |
+| :------------------ | :------------------ | :---------------------------------------------------------------------------- |
+| `constantValue`     | the wrapper         | The authored value. Type matches the wrapper: `f32`, `vec4`, `vec2`, `vec3`   |
+| `dynamics`          | the wrapper         | Pointer to an animated-variable object. Null means the constant is used as-is |
+| `times`             | the dynamics object | Positions along the curve                                                     |
+| `values`            | the dynamics object | The value at each matching entry in `times`                                   |
+| `probabilityTables` | the dynamics object | Per-particle randomisation. See below                                         |
+
+<Callout type="warning" title="probabilityTables multiply, they do not select">
+  A probability table is often read as "pick one of these values at random". It is
+  not. Each table maps a **uniform random draw** through its own
+  `keyTimes` to `keyValues` curve and returns a **multiplier**, which is then
+  applied to `constantValue`. The draw happens **once per particle, at birth**.
+
+So `constantValue` of `5` with a table returning the range `0.5` to `1` gives each
+particle a value between `2.5` and `5`. A table whose `keyValues` cross zero, such
+as `-1` to `1`, will **flip the sign** on roughly half the particles. That is the
+usual explanation for an effect where some particles scroll or spin the opposite
+way to the rest.
+
+Note that `keyTimes` on a probability table is the **draw axis**, not particle age.
+
+</Callout>
+
+### Birth properties and their over-life partners
+
+Many properties come in pairs. The `birth*` one is evaluated **once, when the particle spawns**. Its partner without the prefix keeps acting **across the particle's life**, and is multiplied with the birth value rather than replacing it.
+
+| At spawn            | Across life    |
+| :------------------ | :------------- |
+| `birthColor`        | `Color`        |
+| `birthScale0`       | `scale0`       |
+| `birthRotation0`    | `rotation0`    |
+| `birthVelocity`     | `velocity`     |
+| `birthAcceleration` | `acceleration` |
+| `birthDrag`         | `drag`         |
+
+If a value looks wrong and only one half of a pair is authored, check the other half before changing anything.
+
+### Units
+
+Rotations and rotational velocities are in **degrees** and degrees per second. Lifetimes, periods and delays are in **seconds**. UV scroll rates are in **UVs per second**, and UV rotation is in degrees. Colour channels run `0` to `1`.
+
+### Randomisation, and the `0` suffix
+
+Several birth properties end in `0`, such as `birthScale0` and `birthRotation0`. This is a naming leftover, **not** a minimum-maximum pair. There is no matching `birthScale1` on the current emitter class. Per-particle variation comes from `probabilityTables`, as above.
+
+### Flag bytes
+
+Many booleans are not separate fields. They are single bits packed into shared flag bytes on the emitter. Text tooling surfaces them individually as `flag`, so you will write them one at a time, but they live four or eight to a byte. The full list is in [Emitter flags](#emitter-flags).
+
+---
+
+## System level
+
+`VfxSystemDefinitionData`, the outermost container. 33 registered fields as of patch 16.16.
+
+| Property                           | Type          | What it does                                                                                                                                                |
+| :--------------------------------- | :------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `particleName`                     | `string`      | Readable name of the whole system. Safe to rename, and the most reliable thing to search for when the container's hash is unresolved                        |
+| `particlePath`                     | `string`      | Path grouping the engine uses to organise systems                                                                                                           |
+| `complexEmitterDefinitionData`     | `list[embed]` | The emitters this system owns. The body of the effect                                                                                                       |
+| `simpleEmitterDefinitionData`      | `list[embed]` | The older emitter list. Still present on legacy systems                                                                                                     |
+| `materialOverrideDefinitions`      | `list[embed]` | System-wide material overrides. The emitter has its own list of the same name                                                                               |
+| `transform`                        | `mtx44`       | Applied to the entire system, for scaling, moving and rotating it as one unit. See [Matrix Scaling](/docs/lol/vfx-bins/matrix-scaling)                      |
+| `flags`                            | `u16`         | System-level bit flags. Two are known: `0x100` switches velocity and drag to a closed-form solve, and `0x800` is an aggressive low-spec mode. Default `212` |
+| `mEyeCandy`                        | `bool`        | Marks the system as eye candy, so it disappears when a player turns on Hide Eye Candy                                                                       |
+| `buildUpTime`                      | `f32`         | Warm-up period for the system                                                                                                                               |
+| `visibilityRadius`                 | `f32`         | Culling radius                                                                                                                                              |
+| `overrideScaleCap`                 | `option[f32]` | Caps how far the system can be scaled                                                                                                                       |
+| `scaleDynamicallyWithAttachedBone` | `bool`        | System scale follows the bone it is attached to                                                                                                             |
+| `objectPath`                       | `hash`        | Object path identifier. Added in patch 16.16                                                                                                                |
+| `drawingLayer`                     | `u8`          | Which layer the system draws into                                                                                                                           |
+| `ClockToUse`                       | `u8`          | Which clock drives the system's time                                                                                                                        |
+| `selfIllumination`                 | `f32`         | Self-illumination amount                                                                                                                                    |
+| `assetRemappingTable`              | `list[embed]` | Asset remaps applied within the system                                                                                                                      |
+| `soundOnCreateDefault`             | `string`      | Sound fired when the system is created                                                                                                                      |
+| `voiceOverOnCreateDefault`         | `string`      | Voice-over fired on creation                                                                                                                                |
+| `soundPersistentDefault`           | `string`      | Looping sound for the system's lifetime                                                                                                                     |
+
+<Callout type="info" title="mEyeCandy is a system property">
+  It sits on `VfxSystemDefinitionData`, not on the emitter, which is why it
+  belongs at the system level of the block rather than beside the emitter's
+  render settings.
+</Callout>
+
+---
+
+## Emitter: identity and lifetime
+
+`VfxEmitterDefinitionData`. Everything from here to [Emitter flags](#emitter-flags) is on this class unless a row says otherwise.
+
+| Property               | Type          | What it does                                                                                                                     |
+| :--------------------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------- |
+| `emitterName`          | `string`      | Readable name for one emitter. Safe to rename and worth doing                                                                    |
+| `disabled`             | `bool`        | Turns the emitter off without deleting it                                                                                        |
+| `importance`           | `u8`          | Quality-culling priority, checked against the Effects Quality video setting. See the table below. Default `2`                    |
+| `particleLifetime`     | `ValueFloat`  | How long each particle lives after being emitted. Defaults to `3.0` when absent. `-1` is a sentinel, see the warning below       |
+| `lifetime`             | `option[f32]` | How long the emitter itself runs                                                                                                 |
+| `particleLinger`       | `option[f32]` | Extra seconds particles stay visible after the emitter finishes. When absent it defaults to `particleLifetime + 10`, not to zero |
+| `emitterLinger`        | `option[f32]` | Extra seconds the emitter itself lingers                                                                                         |
+| `particleLingerType`   | `u8`          | Which lingering behaviour is used                                                                                                |
+| `Linger`               | `pointer`     | A `VfxLingerDefinitionData`, for lingering that changes the particle rather than just delaying it                                |
+| `flexParticleLifetime` | `pointer`     | Flex override for particle lifetime                                                                                              |
+
+<Callout type="warning" title="particleLifetime -1 means two opposite things">
+  `-1` does **not** mean "infinite particle". It means "live until the emitter
+  stops", and what that gives you depends entirely on `isSingleParticle`.
+
+With `isSingleParticle` set, the emission-window clamp is skipped, so the window
+stays uncapped, the emitter never completes, and the particle **persists
+indefinitely**. This is how a permanently attached prop is built.
+
+Without `isSingleParticle`, the clamp branch never runs and the emission window
+stays at the authored `lifetime`. The emitter stops there and takes its particles
+with it, so a continuous `-1` **despawns** rather than persisting.
+
+An authored `9999` behaves the same as `-1`.
+
+</Callout>
+
+### How `importance` culls
+
+`importance` is checked against the player's Effects Quality setting when the system builds its emitters. It is a category, not a scale, and two of the values behave in ways the name does not suggest.
+
+| Effects Quality          | Importance values skipped |
+| :----------------------- | :------------------------ |
+| 0 to 1, Very Low and Low | `0`, `1`, `5`             |
+| 2, Medium                | `0`, `1`                  |
+| 3, High                  | `0`, `4`                  |
+| 4, Very High             | `4`                       |
+
+So `0` through `3` ascend in priority, and `3` is gameplay-critical and never culled. `4` is a **low-quality substitute** shown only on low settings, and `5` is the reverse, shown only on Medium and above. Pairing a `4` emitter with a `5` emitter is how one effect ships two versions of itself.
+
+Four other things gate whether an emitter exists at all: `disabled`, `colorblindVisibility`, `ChanceToNotExist`, and system `flags` bit `0x800`, which strips everything except importance `3` and `4`.
+
+`rate`, `lifetime`, `particleLifetime` and `particleLinger` are shown with screenshots on the [Emitter Library](/docs/lol/assets-library/emitter-library) page.
+
+---
+
+## Emitter: emission and timing
+
+| Property                    | Type           | What it does                                                                                          |
+| :-------------------------- | :------------- | :---------------------------------------------------------------------------------------------------- |
+| `rate`                      | `ValueFloat`   | Particles spawned per second. On an `isSingleParticle` emitter it sets the particle **count** instead |
+| `flexRate`                  | `pointer`      | Flex override for rate                                                                                |
+| `rateByVelocityFunction`    | `ValueVector2` | Scales rate with how fast the emitter is moving                                                       |
+| `MaximumRateByVelocity`     | `option[f32]`  | Upper bound for the above                                                                             |
+| `timeBeforeFirstEmission`   | `f32`          | Delay before anything spawns. Useful for staggering a system into stages                              |
+| `period`                    | `option[f32]`  | Length of one emission cycle                                                                          |
+| `timeActiveDuringPeriod`    | `option[f32]`  | How much of each `period` the emitter actually emits for                                              |
+| `ChanceToNotExist`          | `f32`          | Probability the emitter is skipped entirely on spawn                                                  |
+| `SpawnShape`                | `pointer`      | An `IVfxShape` giving the volume particles spawn inside                                               |
+| `FlexShapeDefinition`       | `pointer`      | Flex variant of the spawn shape                                                                       |
+| `emissionSurfaceDefinition` | `pointer`      | Spawn across a surface instead of a volume                                                            |
+| `emissionMeshName`          | `string`       | A mesh used as the emission shape                                                                     |
+| `emissionMeshScale`         | `f32`          | Scales that emission mesh                                                                             |
+
+<Callout
+  type="info"
+  title="period and timeActiveDuringPeriod are how bursts are made"
+>
+  Set `period` to the cycle length and `timeActiveDuringPeriod` to a shorter
+  value, and the emitter pulses instead of running continuously. Leaving both
+  unset gives a steady stream.
+</Callout>
+
+---
+
+## Emitter: placement and orientation
+
+| Property                        | Type           | What it does                                                                                              |
+| :------------------------------ | :------------- | :-------------------------------------------------------------------------------------------------------- |
+| `EmitterPosition`               | `ValueVector3` | Where particles spawn relative to the emitter's origin. Positive Y is up                                  |
+| `translationOverride`           | `vec3`         | Offsets the emitter as a whole                                                                            |
+| `rotationOverride`              | `vec3`         | Rotates the emitter as a whole                                                                            |
+| `scaleOverride`                 | `vec3`         | Scales the emitter as a whole                                                                             |
+| `FlexInstanceScale`             | `pointer`      | Flex override for instance scale                                                                          |
+| `bindWeight`                    | `ValueFloat`   | How much the particle follows what it is bound to. `1` follows fully, `0` leaves it behind in world space |
+| `postRotateOrientationAxis`     | `vec3`         | Axis used when `hasPostRotateOrientation` is set                                                          |
+| `offsetLifetimeScaling`         | `vec3`         | Scales particle **lifetime** by how far the particle spawned from the emitter, per axis                   |
+| `offsetLifeScalingSymmetryMode` | `u8`           | Symmetry mode for the above                                                                               |
+
+<Callout type="info" title="EmitterPosition or translationOverride?">
+  `EmitterPosition` moves where particles spawn inside the emitter.
+  `translationOverride` shifts the emitter as a whole. If one emitter is out of
+  place use the second, if particles are misplaced within an otherwise correct
+  emitter use the first.
+</Callout>
+
+---
+
+## Emitter: birth properties
+
+The state a particle is handed the instant it spawns. Anything named `birth*` is an initial condition, not an ongoing one.
+
+| Property                      | Type           | What it does                                                                              |
+| :---------------------------- | :------------- | :---------------------------------------------------------------------------------------- |
+| `birthColor`                  | `ValueColor`   | Starting colour, RGBA                                                                     |
+| `birthScale0`                 | `ValueVector3` | Starting size                                                                             |
+| `birthRotation0`              | `ValueVector3` | Starting rotation                                                                         |
+| `birthRotationalVelocity0`    | `ValueVector3` | Starting spin speed                                                                       |
+| `birthRotationalAcceleration` | `ValueVector3` | Starting rotational acceleration                                                          |
+| `birthVelocity`               | `ValueVector3` | Starting velocity                                                                         |
+| `birthAcceleration`           | `ValueVector3` | Starting acceleration                                                                     |
+| `birthDrag`                   | `ValueVector3` | Starting drag                                                                             |
+| `birthOrbitalVelocity`        | `ValueVector3` | Orbital rotation. See the warning below                                                   |
+| `birthFrameRate`              | `ValueFloat`   | Starting playback rate for an animated texture                                            |
+| `birthUVOffset`               | `ValueVector2` | Starting offset into the texture. Useful for desynchronising particles that share a sheet |
+| `birthUvScrollRate`           | `ValueVector2` | Starting UV scroll rate                                                                   |
+| `birthUvRotateRate`           | `ValueFloat`   | Starting UV rotation rate                                                                 |
+
+Each of these has a `flex*` sibling (`flexBirthVelocity`, `flexBirthUVOffset`, `flexScaleBirthScale` and so on) that overrides it when a flex value is supplied.
+
+<Callout type="warning" title="birthOrbitalVelocity adds no velocity">
+  Despite the name, this contributes **nothing to the particle's velocity**. It is
+  transform-only: it rotates the particle's own matrix while its stored position
+  continues to advance on `birthVelocity` and forces alone.
+
+This matters if you are reasoning about how far a particle travels. Treating it as
+a tangential velocity on top of the rotation double-counts the motion and gives
+exactly twice the path length.
+
+</Callout>
+
+---
+
+## Emitter: motion over life
+
+Where `birth*` sets the starting state, these keep acting.
+
+| Property                    | Type                     | What it does                                                                                           |
+| :-------------------------- | :----------------------- | :----------------------------------------------------------------------------------------------------- |
+| `velocity`                  | `ValueVector3`           | Velocity across the particle's life                                                                    |
+| `acceleration`              | `ValueVector3`           | Acceleration across the life                                                                           |
+| `worldAcceleration`         | `IntegratedValueVector3` | Acceleration in world space regardless of particle orientation. Gravity lives here, as negative Y      |
+| `drag`                      | `ValueVector3`           | Drag across the life                                                                                   |
+| `scale0`                    | `ValueVector3`           | Scale across the life, multiplied with `birthScale0`                                                   |
+| `rotation0`                 | `IntegratedValueVector3` | Rotation across the life                                                                               |
+| `directionVelocityScale`    | `f32`                    | How much the particle stretches along its travel direction with speed. Used with `isDirectionOriented` |
+| `directionVelocityMinScale` | `f32`                    | Floor for that stretch                                                                                 |
+| `fieldCollectionDefinition` | `pointer`                | Force fields. See [Force fields](#force-fields)                                                        |
+
+---
+
+## Emitter: colour
+
+| Property                                | Type         | What it does                                                                         |
+| :-------------------------------------- | :----------- | :----------------------------------------------------------------------------------- |
+| `birthColor`                            | `ValueColor` | Colour at spawn                                                                      |
+| `Color`                                 | `ValueColor` | Colour across the particle's life, multiplied with `birthColor`. Default white       |
+| `colorLookUpTypeX` / `colorLookUpTypeY` | `u8`         | What drives each axis of the `particleColorTexture` lookup, for example particle age |
+| `colorLookUpScales`                     | `vec2`       | Scale applied to those lookup coordinates. Default `1, 1`                            |
+| `colorLookUpOffsets`                    | `vec2`       | Offset applied to those lookup coordinates                                           |
+| `colorRenderFlags`                      | `u8`         | Bit flags affecting how colour is applied at render time                             |
+| `modulationFactor`                      | `vec4`       | Modulation applied to the final colour                                               |
+| `censorModulateValue`                   | `vec4`       | Colour used when content is censored for a region                                    |
+| `paletteDefinition`                     | `pointer`    | A `VfxPaletteDefinitionData`. See [Palette](#palette)                                |
+| `colorblindVisibility`                  | `u8`         | `0` always visible, `1` only in normal mode, `2` only in colourblind mode            |
+
+### Reading an RGBA value
+
+```rust
+birthColor: embed = ValueColor {
+    constantValue: vec4 = { 1, 0.7059, 0, 1 }
+}
+```
+
+Channels run `0` to `1` rather than `0` to `255`. To convert, divide by 255. The green channel above is `180`, and `180 / 255` gives `0.7059`.
+
+The fourth value is alpha, where **`0` is fully transparent and `1` is fully opaque**.
+
+For recolouring in practice, [Quartz](/docs/lol/tools/modding-apps/quartz) does the maths for you.
+
+---
+
+## Emitter: texture and UV
+
+| Property               | Type                     | What it does                                                                                        |
+| :--------------------- | :----------------------- | :-------------------------------------------------------------------------------------------------- |
+| `texture`              | `string`                 | The `.dds` or `.tex` the emitter draws. See [File Formats](/docs/lol/vfx-bins/file-formats)         |
+| `particleColorTexture` | `string`                 | Gradient sampled to colour particles, usually across their life. Aimed by the `colorLookUp*` fields |
+| `falloffTexture`       | `string`                 | Falloff ramp texture                                                                                |
+| `textureMult`          | `pointer`                | A `VfxTextureMultDefinitionData`, **not a plain string**. See [Texture mult](#texture-mult)         |
+| `texDiv`               | `vec2`                   | Divides the texture into a grid, for sheet animation                                                |
+| `startFrame`           | `u16`                    | First frame of an animated sheet                                                                    |
+| `numFrames`            | `u16`                    | How many frames the sheet holds                                                                     |
+| `frameRate`            | `f32`                    | How fast those frames play                                                                          |
+| `uvMode`               | `u8`                     | How UV coordinates are interpreted                                                                  |
+| `texAddressModeBase`   | `u8`                     | Wrap, clamp or mirror for the base texture                                                          |
+| `uvRotation`           | `ValueFloat`             | Rotates the texture                                                                                 |
+| `uvScale`              | `ValueVector2`           | Scales the texture                                                                                  |
+| `uvTransformCenter`    | `vec2`                   | Pivot for UV rotation and scale                                                                     |
+| `uvParallaxScale`      | `f32`                    | Parallax amount on the UVs                                                                          |
+| `emitterUvScrollRate`  | `vec2`                   | Scroll rate applied per emitter                                                                     |
+| `particleUVScrollRate` | `IntegratedValueVector2` | Scroll rate applied per particle                                                                    |
+| `particleUVRotateRate` | `IntegratedValueFloat`   | Rotation rate applied per particle                                                                  |
+| `isTexturePixelated`   | `bool`                   | Point sampling instead of smooth filtering                                                          |
+
+<Callout type="info" title="There is no plain scrollRate">
+  Scrolling is always scoped to what it affects. On the modern emitter the
+  fields are `birthUvScrollRate`, `emitterUvScrollRate` and
+  `particleUVScrollRate`. A bare `uvScrollRate` exists only on the legacy class
+  described in [The legacy component model](#the-legacy-component-model).
+</Callout>
+
+---
+
+## Emitter: render state
+
+| Property                      | Type          | What it does                                                                                                |
+| :---------------------------- | :------------ | :---------------------------------------------------------------------------------------------------------- |
+| `blendMode`                   | `u8`          | How the particle blends with what is behind it. Full table below                                            |
+| `miscRenderFlags`             | `u8`          | Depth and blend state bits. See the warning below                                                           |
+| `meshRenderFlags`             | `u8`          | Render flags for mesh primitives                                                                            |
+| `colorRenderFlags`            | `u8`          | Render flags affecting colour                                                                               |
+| `pass`                        | `i16`         | Draw order. Lower draws first and sits underneath                                                           |
+| `renderPhaseOverride`         | `u8`          | Forces the emitter into a specific render phase. Default `7`, meaning no override                           |
+| `depthBiasFactors`            | `vec2`        | Nudges depth to stop coplanar surfaces fighting                                                             |
+| `DepthPushPull`               | `f32`         | Pushes or pulls the particle along depth. Default `0`. The shader calls this one `PARTICLE_DEPTH_PUSH_PULL` |
+| `alphaRef`                    | `u8`          | Alpha-test threshold, `0` to `255`. Pixels below it are discarded. Default `5`                              |
+| `stencilMode`                 | `u8`          | Stencil behaviour                                                                                           |
+| `stencilRef`                  | `u8`          | Stencil reference value                                                                                     |
+| `StencilReferenceId`          | `hash`        | Named stencil reference                                                                                     |
+| `disableBackfaceCull`         | `bool`        | Draws both sides of every face                                                                              |
+| `softParticleParams`          | `pointer`     | A `VfxSoftParticleDefinitionData`. See [Soft particles](#soft-particles)                                    |
+| `sliceTechniqueRange`         | `f32`         | Range for the slice technique                                                                               |
+| `CustomMaterial`              | `pointer`     | A `VfxMaterialDefinitionData` replacing the default material                                                |
+| `materialOverrideDefinitions` | `list[embed]` | Per-material overrides for this emitter                                                                     |
+| `Filtering`                   | `pointer`     | A `VfxEmitterFiltering`, controlling where the emitter is allowed to show                                   |
+| `Audio`                       | `pointer`     | A `VfxEmitterAudio`                                                                                         |
+
+### blendMode values
+
+These are fixed, and the same for every primitive. Each mode selects a source and destination blend factor and a blend operation.
+
+| Mode | Src            | Dest          | Op  | Writes depth | Blending |
+| :--- | :------------- | :------------ | :-- | :----------- | :------- |
+| `0`  | ONE            | ONE           | ADD | no           | yes      |
+| `1`  | SRC_ALPHA      | INV_SRC_ALPHA | ADD | no           | yes      |
+| `2`  | ZERO           | INV_SRC_COLOR | ADD | no           | yes      |
+| `3`  |                |               |     | **yes**      | **no**   |
+| `4`  | SRC_ALPHA      | ONE           | ADD | no           | yes      |
+| `5`  | ONE            | INV_SRC_ALPHA | ADD | no           | yes      |
+| `6`  | ONE            | ONE           | MIN | no           | yes      |
+| `7`  | ONE            | ONE           | MAX | no           | yes      |
+| `8`  | INV_DEST_ALPHA | DEST_ALPHA    | ADD | no           | yes      |
+
+Reading that table in practice:
+
+- `0` and `4` are the **additive** modes. Black contributes nothing, so they are the safe ones to recolour towards black.
+- `1` is standard **alpha blending**, the closest thing to "normal".
+- `2` **darkens**, since it multiplies by the inverse of the source colour.
+- `3` is the **opaque** mode. It is the only one that writes depth and the only one that does not blend at all.
+- `6` and `7` take the **minimum** or **maximum** of source and destination instead of adding.
+
+<Callout type="warning" title="miscRenderFlags bit 0 disables the depth test, inverted">
+  Bit `0` maps to the depth-stencil state's `DepthEnable`, and it is **inverted**:
+  when the bit is **set**, the depth test is **off**. Setting `miscRenderFlags` to
+  `1` is what makes a particle draw through geometry.
+
+It is not a face-inversion flag, and the reading that a value of `4` turns depth
+writing off while leaving the test on does not hold. Depth **writing** is decided
+by `blendMode` instead, and only mode `3` enables it.
+
+The comparison used is `LESS_EQUAL` rather than `LESS`, which is what lets a
+coplanar ground decal draw at all.
+
+</Callout>
+
+---
+
+## Emitter flags
+
+Four bytes on the emitter, each carrying up to eight named bits. Text tooling exposes them one at a time as `flag`.
+
+| Flag                            | What it does                                                     |
+| :------------------------------ | :--------------------------------------------------------------- |
+| `TextureFlipU` / `TextureFlipV` | Mirror the texture on each axis                                  |
+| `particleIsLocalOrientation`    | Particle orientation is read in local space                      |
+| `isLocalOrientation`            | Emitter orientation is read in local space                       |
+| `isDirectionOriented`           | Particles orient along their direction of travel                 |
+| `isUniformScale`                | Scale is locked to one value on all axes                         |
+| `hasPostRotateOrientation`      | Applies `postRotateOrientationAxis` after rotation               |
+| `isRandomStartFrame`            | Each particle starts on a random sheet frame                     |
+| `doesCastShadow`                | The emitter contributes to shadows                               |
+| `isRotationEnabled`             | Enables rotation at all                                          |
+| `uvScrollClamp`                 | Clamps UV scroll instead of wrapping                             |
+| `isFollowingTerrain`            | Particles follow terrain height                                  |
+| `isGroundLayer`                 | Draws as a ground layer                                          |
+| `useEmissionMeshNormalForBirth` | Particles launch along the emission mesh's normals               |
+| `useNavmeshMask`                | Masks the effect against terrain so it does not spill over walls |
+| `ParticlesShareRandomValue`     | All particles draw the same random value                         |
+| `SortEmittersByPos`             | Sorts emitters by position                                       |
+| `IsEmitterSpace`                | Particles are simulated in emitter space rather than world space |
+| `HasVariableStartTime`          | Start time varies per particle                                   |
+| `isSingleParticle`              | Exactly one particle instead of a stream                         |
+| `doesParticleLifetimeScale`     | Particle lifetime scales with the system                         |
+| `doesLifetimeScale`             | Emitter lifetime scales with the system                          |
+| `WriteAlphaOnly`                | Writes only the alpha channel                                    |
+
+---
+
+## Primitives
+
+`primitive` is a pointer that decides what each particle draws as. Leaving it unset gives the default camera-facing billboard quad.
+
+| Class                                 | What it draws                                                                      |
+| :------------------------------------ | :--------------------------------------------------------------------------------- |
+| `VfxPrimitiveCameraQuad`              | A flat quad that always faces the camera. The default, and most particles you meet |
+| `VfxPrimitiveCameraUnitQuad`          | A camera-facing quad at unit size                                                  |
+| `VfxPrimitiveArbitraryQuad`           | A quad with a fixed orientation that does not face the camera                      |
+| `VfxPrimitiveMesh`                    | A mesh                                                                             |
+| `VfxPrimitiveAttachedMesh`            | A mesh attached to a bone. Adds `UseAvatarSpecificSubmeshMask`                     |
+| `VfxPrimitiveCameraTrail`             | A trail that faces the camera                                                      |
+| `VfxPrimitiveArbitraryTrail`          | A trail with a fixed orientation                                                   |
+| `VfxPrimitiveRibbon`                  | A ribbon                                                                           |
+| `VfxPrimitiveBeam`                    | A beam between two points                                                          |
+| `VfxPrimitiveCameraSegmentBeam`       | A segmented, camera-facing beam                                                    |
+| `VfxPrimitiveCameraSegmentSeriesBeam` | A series of segmented beams                                                        |
+| `VfxPrimitiveLaser`                   | A laser                                                                            |
+| `VfxPrimitivePlanarProjection`        | Projects the texture onto a plane. Ground decals                                   |
+| `VfxPrimitiveRay`                     | A ray                                                                              |
+| `VfxPrimitiveNonRenderable`           | Draws nothing. Used for emitters that exist only to spawn children or drive logic  |
+
+### Mesh fields
+
+Mesh primitives carry a `VfxMeshDefinitionData` in `mMesh`. Note the `m` prefixes: these are not spelled the way the emitter's own fields are.
+
+| Property                 | Type           | What it does                           |
+| :----------------------- | :------------- | :------------------------------------- |
+| `mMeshName`              | `string`       | The mesh to draw                       |
+| `mMeshSkeletonName`      | `string`       | Skeleton for an animated mesh          |
+| `mSimpleMeshName`        | `string`       | An `.scb` or `.sco` simple mesh        |
+| `mSubmeshesToDraw`       | `list[string]` | Which submeshes render                 |
+| `mSubmeshesToDrawAlways` | `list[string]` | Submeshes that always render           |
+| `mLockMeshToAttachment`  | `bool`         | Locks the mesh to its attachment point |
+| `mAnimationName`         | `string`       | Animation to play on the mesh          |
+| `mAnimationVariants`     | `list[string]` | Alternative animations                 |
+
+Mesh primitives also carry `AlignPitchToCamera` and `AlignYawToCamera` on `VfxPrimitiveMeshBase`.
+
+### Mesh file types
+
+| Extension | What it is                                            |
+| :-------- | :---------------------------------------------------- |
+| `.scb`    | Static mesh, binary                                   |
+| `.sco`    | Static mesh, ASCII text, carries joints and materials |
+| `.skn`    | Rigged mesh, the standard for champion models         |
+| `.skl`    | Skeleton paired with an `.skn`                        |
+
+An `.skn` and `.skl` pair inside a particle folder means an animated mesh. See [Meshes as Particles](/docs/lol/vfx-bins/meshes-as-particles).
+
+### Trail and ribbon
+
+`VfxPrimitiveTrailBase` carries a `VfxTrailDefinitionData` in `mTrail`:
+
+| Property            | Type           | What it does                                       |
+| :------------------ | :------------- | :------------------------------------------------- |
+| `mBirthTilingSize`  | `ValueVector3` | Tiling size at birth                               |
+| `mCutoff`           | `f32`          | Arc length at which the trail stops being extended |
+| `mMaxAddedPerFrame` | `i32`          | Cap on points added per frame                      |
+| `mSmoothingMode`    | `u8`           | Smoothing applied along the trail                  |
+| `mMode`             | `u8`           | Trail mode                                         |
+
+`VfxRibbonDefinitionData` carries `birthTilingSize` as a `ValueVector2`.
+
+---
+
+## Sub-definition classes
+
+Each of these hangs off a pointer on the emitter. **Null means the feature is off entirely.**
+
+### Texture mult
+
+`VfxTextureMultDefinitionData`. A second texture multiplied over the base, the same idea as Multiply in an image editor. The emitter's `textureMult` field points at this object, and the actual filename is the `textureMult` string **inside** it.
+
+| Property                         | Type                     | What it does                           |
+| :------------------------------- | :----------------------- | :------------------------------------- |
+| `textureMult`                    | `string`                 | The multiply texture                   |
+| `texDivMult`                     | `vec2`                   | Grid division for the multiply texture |
+| `texAddressModeMult`             | `u8`                     | Wrap mode                              |
+| `uvScaleMult`                    | `ValueVector2`           | Scale on the multiply UVs              |
+| `UvRotationMult`                 | `ValueFloat`             | Rotation on the multiply UVs           |
+| `uvTransformCenterMult`          | `vec2`                   | Pivot for that rotation and scale      |
+| `birthUvScrollRateMult`          | `ValueVector2`           | Scroll rate at birth                   |
+| `emitterUvScrollRateMult`        | `vec2`                   | Scroll rate per emitter                |
+| `birthUVOffsetMult`              | `ValueVector2`           | Starting UV offset                     |
+| `birthUvRotateRateMult`          | `ValueFloat`             | Starting UV rotation rate              |
+| `ParticleIntegratedUvScrollMult` | `IntegratedValueVector2` | Per-particle scroll                    |
+| `ParticleIntegratedUvRotateMult` | `IntegratedValueFloat`   | Per-particle rotation                  |
+
+Its flag byte carries `uvScrollAlphaMult`, `uvScrollClampMult`, `TextureMultFilpU`, `TextureMultFilpV` and `isRandomStartFrameMult`. Those last two really are spelled that way in the engine, so search for "Filp" rather than "Flip" when you go looking for them.
+
+### Palette
+
+`VfxPaletteDefinitionData`. Colours particles by sampling a gradient texture instead of using a flat value.
+
+| Property                    | Type           | What it does                         |
+| :-------------------------- | :------------- | :----------------------------------- |
+| `paletteTexture`            | `string`       | The gradient image                   |
+| `PaletteTextureAddressMode` | `u8`           | Wrap mode for the gradient           |
+| `paletteSelector`           | `ValueVector3` | Where in the palette to sample       |
+| `palleteSrcMixColor`        | `ValueColor`   | Colour mixed with the sampled result |
+| `PaletteUAnimationCurve`    | `ValueFloat`   | Animates the U coordinate            |
+| `PaletteVAnimationCurve`    | `ValueFloat`   | Animates the V coordinate            |
+| `paletteCount`              | `i32`          | Number of palettes in the texture    |
+
+<Callout type="info" title="Palette or Pallete?">
+  The class and most fields use the correct spelling. The engine's own
+  misspelling survives in exactly one field, `palleteSrcMixColor`, so searching
+  a bin for "pallete" will miss nearly everything. Search for "palette".
+</Callout>
+
+### Alpha erosion
+
+`VfxAlphaErosionDefinitionData`. Dissolves the particle using a map. This is how nearly every burning-away or wipe effect is built.
+
+| Property                                 | Type         | What it does                                             |
+| :--------------------------------------- | :----------- | :------------------------------------------------------- |
+| `erosionMapName`                         | `string`     | The erosion texture                                      |
+| `erosionMapAddressMode`                  | `u8`         | Wrap mode for the map                                    |
+| `erosionMapChannelMixer`                 | `ValueColor` | Which channels of the map are used, and how much of each |
+| `erosionDriveCurve`                      | `ValueFloat` | How the erosion progresses                               |
+| `erosionDriveSource`                     | `u8`         | What drives it, for example particle age                 |
+| `erosionFeatherIn` / `erosionFeatherOut` | `f32`        | Softness at each edge of the boundary                    |
+| `erosionSliceWidth`                      | `f32`        | Width of the eroding band                                |
+| `LingerErosionDriveCurve`                | `ValueFloat` | A separate curve used during linger                      |
+| `UseLingerErosionDriveCurve`             | `bool`       | Enables that separate curve                              |
+
+An erosion map is usually greyscale, where white erodes first and black last. Multi-channel maps carry an independent pattern per colour channel, and `erosionMapChannelMixer` picks between them.
+
+### Distortion
+
+`VfxDistortionDefinitionData`. Warps whatever is drawn behind the particle. Shockwaves and heat haze.
+
+| Property           | Type     | What it does                      |
+| :----------------- | :------- | :-------------------------------- |
+| `normalMapTexture` | `string` | Normal map driving the distortion |
+| `distortion`       | `f32`    | Strength                          |
+| `distortionMode`   | `u8`     | Which distortion mode is used     |
+
+### Reflection and fresnel
+
+`VfxReflectionDefinitionData`. The rim-highlight and reflection block. `fresnel` lives here, not on the emitter.
+
+| Property                    | Type     | What it does                                          |
+| :-------------------------- | :------- | :---------------------------------------------------- |
+| `reflectionMapTexture`      | `string` | The reflection map                                    |
+| `reflectionOpacityDirect`   | `f32`    | Reflection strength head-on                           |
+| `reflectionOpacityGlancing` | `f32`    | Reflection strength at grazing angles                 |
+| `reflectionFresnel`         | `f32`    | Fresnel term for the reflection                       |
+| `reflectionFresnelColor`    | `vec4`   | Colour of that term                                   |
+| `fresnel`                   | `f32`    | Fresnel strength, the rim highlight at grazing angles |
+| `fresnelColor`              | `vec4`   | Colour of the rim highlight                           |
+
+### Soft particles
+
+`VfxSoftParticleDefinitionData`. Softens the hard seam where a particle intersects geometry.
+
+| Property   | Type  | What it does                          |
+| :--------- | :---- | :------------------------------------ |
+| `beginIn`  | `f32` | Offset before the inward fade starts  |
+| `beginOut` | `f32` | Offset before the outward fade starts |
+| `deltaIn`  | `f32` | Distance the inward fade covers       |
+| `deltaOut` | `f32` | Distance the outward fade covers      |
+
+There is a fifth mode byte selecting which of the two fades apply. A null `softParticleParams` pointer disables the feature outright, and there is no separate on-off field.
+
+### Linger
+
+`VfxLingerDefinitionData`. Changes the particle during the linger phase rather than just delaying its removal.
+
+| Property                  | Type           | What it does                       |
+| :------------------------ | :------------- | :--------------------------------- |
+| `LingerRotation`          | `ValueVector3` | Rotation applied while lingering   |
+| `LingerScale`             | `ValueVector3` | Scale applied while lingering      |
+| `KeyedLingerVelocity`     | `ValueVector3` | Velocity during linger             |
+| `KeyedLingerAcceleration` | `ValueVector3` | Acceleration during linger         |
+| `KeyedLingerDrag`         | `ValueVector3` | Drag during linger                 |
+| `SeparateLingerColor`     | `ValueColor`   | A different colour while lingering |
+
+Each has a matching `Use*` flag: `UseLingerRotation`, `UseLingerScale`, `UseKeyedLingerVelocity`, `UseKeyedLingerAcceleration`, `UseKeyedLingerDrag` and `UseSeparateLingerColor`. Setting the value without its flag does nothing.
+
+### Materials and drivers
+
+`VfxMaterialDefinitionData` holds a `Material` link and a `materialDrivers` map. Drivers animate a material parameter instead of holding it constant.
+
+| Class                            | What it does                                   |
+| :------------------------------- | :--------------------------------------------- |
+| `VfxColorOverLifeMaterialDriver` | Drives a colour across the particle's lifetime |
+| `VfxFloatOverLifeMaterialDriver` | Drives a single float across the lifetime      |
+| `VfxSineMaterialDriver`          | Oscillates a value on a sine wave, for pulsing |
+
+For glow and toon shader work, see [Static Materials](/docs/lol/vfx-bins/static-materials).
+
+---
+
+## Force fields
+
+`VfxFieldCollectionDefinitionData`, reached through the emitter's `fieldCollectionDefinition`. Where `birthVelocity` sets a particle moving, a field keeps acting on it.
+
+| Property                       | Type          | What it does                               |
+| :----------------------------- | :------------ | :----------------------------------------- |
+| `fieldAccelerationDefinitions` | `list[embed]` | Constant acceleration, for example gravity |
+| `fieldAttractionDefinitions`   | `list[embed]` | Pulls particles toward a point             |
+| `fieldDragDefinitions`         | `list[embed]` | Slows particles down                       |
+| `fieldNoiseDefinitions`        | `list[embed]` | Adds turbulence                            |
+| `fieldOrbitalDefinitions`      | `list[embed]` | Spins particles around an axis             |
+
+## Emission shapes
+
+`SpawnShape` points at an `IVfxShape`.
+
+| Class              | What it does                                          |
+| :----------------- | :---------------------------------------------------- |
+| `VfxShapeSphere`   | Spawn inside a sphere, with a `radius`                |
+| `VfxShapeBox`      | Spawn inside a box                                    |
+| `VfxShapeCylinder` | Spawn inside a cylinder                               |
+| `VfxShapeVolume`   | Shared volume behaviour, carries its own `flags`      |
+| `VfxShapeLegacy`   | The older shape system, still present on many effects |
+
+`VfxEmissionMeshData` handles spawning from a mesh, with `meshName`, `skeletonName`, `AnimationName`, `meshScale`, `maxJointWeights`, `Submeshes` and `useSurfaceNormalForBirthPhysics`.
+
+---
+
+## Child particles
+
+`VfxChildParticleSetDefinitionData`, reached through the emitter's `childParticleSetDefinition`. This is how a trail sheds sparks or an explosion throws debris.
+
+| Property                      | Type           | What it does                                                              |
+| :---------------------------- | :------------- | :------------------------------------------------------------------------ |
+| `childrenIdentifiers`         | `list[embed]`  | The child systems to spawn, as `VfxChildIdentifier` entries               |
+| `boneToSpawnAt`               | `list[string]` | Bones the children spawn on                                               |
+| `childrenProbability`         | `ValueFloat`   | Chance a child spawns at all                                              |
+| `childEmitOnDeath`            | `bool`         | Spawn the child when the parent particle dies rather than when it is born |
+| `ParentInheritanceDefinition` | `pointer`      | A `VfxParentInheritanceParams` deciding what the child inherits           |
+
+`VfxChildIdentifier` holds `effect` (a link), `effectKey` (a hash) and `effectName` (a string).
+
+`VfxParentInheritanceParams` holds `Mode` and `RelativeOffset`. The offset is a first-class parent-relative channel, separate from the child's own `EmitterPosition`.
+
+<Callout type="warning" title="Children spawn once, at birth">
+  There is no continuous feed from parent to child. A child system is created
+  **exactly once, at the moment its carrier particle is born**, and from then on runs
+  as an independent system on its own clock. The only teardown is the carrier
+  particle dying.
+
+A consequence worth knowing: for an `isSingleParticle` carrier there is exactly one
+particle and therefore exactly one child creation, and the parent emitter's
+emission window closing cannot stop it.
+
+</Callout>
+
+<Callout type="info" title="Inheritance is a mode, not a fixed chain">
+  What a child inherits from its parent is decided by the `Mode` value on
+  `VfxParentInheritanceParams`. When no `ParentInheritanceDefinition` is authored the
+  child runs under the default mode. Any mental model that assumes one fixed set of
+  inherited terms will be right for the default and wrong for the rest.
+
+Child systems nest, and the engine walks them depth-first, so a three-deep nest
+composes at every level.
+
+</Callout>
+
+A common pattern is a parent emitter using `VfxPrimitiveNonRenderable`: it draws nothing and exists only to place its children.
+
+---
+
+## The legacy component model
+
+Older effects use a second, component-based emitter model that still ships in the engine. You will meet it on long-standing champions. It is documented here so you can recognise it, not because you should author new work with it.
+
+| Class                        | Size      | Role                                                                            |
+| :--------------------------- | :-------- | :------------------------------------------------------------------------------ |
+| `VfxEmitterLegacySimple`     | 13 fields | The simple legacy emitter, reached through the emitter's `LegacySimple` pointer |
+| `VfxLegacyRenderComponent`   | 66 fields | Legacy render state                                                             |
+| `VfxLegacyPhysicsComponent`  | 37 fields | Legacy motion and placement                                                     |
+| `VfxLegacyLifetimeComponent` | 17 fields | Legacy timing                                                                   |
+| `VfxLegacyGeometryComponent` | 1 field   | Legacy geometry                                                                 |
+
+Many names appear on both models. `blendMode`, `texture`, `bindWeight`, `birthVelocity`, `particleLifetime` and others exist on the modern emitter **and** on a legacy component, at different offsets. When a value seems to have no effect, check which of the two you are actually editing.
+
+Three names exist **only** on the legacy model:
+
+| Property          | Type   | Lives on                 |
+| :---------------- | :----- | :----------------------- |
+| `uvScrollRate`    | `vec2` | `VfxEmitterLegacySimple` |
+| `particleBind`    | `vec2` | `VfxEmitterLegacySimple` |
+| `lockedToEmitter` | `bool` | `VfxEmitterLegacySimple` |
+
+`VfxEmitterLegacySimple` also carries `birthScale`, `scale`, `birthRotation`, `birthRotationalVelocity`, `rotation`, `scaleBias`, `orientation`, `fixedOrbitType`, `hasFixedOrbit` and `scaleUpFromOrigin`. Note the unsuffixed `birthScale` and `birthRotation` here, against `birthScale0` and `birthRotation0` on the modern emitter.
+
+The `LegacySimple` pointer is what emitters in the system's `simpleEmitterDefinitionData` list use. If a system populates that list rather than `complexEmitterDefinitionData`, this is the block its emitters read.
+
+### Properties the emitter has lost
+
+Four emitter properties were retired and will only turn up in old bins or old documentation.
+
+| Property          | Removed in | Replaced by                                              |
+| :---------------- | :--------- | :------------------------------------------------------- |
+| `shape`           | 14.1       | `SpawnShape`                                             |
+| `Material`        | 14.1       | `CustomMaterial` and `materialOverrideDefinitions`       |
+| `materialDrivers` | 14.1       | The `materialDrivers` map on `VfxMaterialDefinitionData` |
+| `flexOffset`      | 15.11      | Nothing directly                                         |
+
+`assetCategory` was removed from `VfxSystemDefinitionData` in 14.15.
+
+---
+
+## Things that are easy to get wrong
+
+A short list of the misreadings that cost the most time.
+
+| Assumption                                            | What is actually true                                                                                      |
+| :---------------------------------------------------- | :--------------------------------------------------------------------------------------------------------- |
+| `birthScale0` and `birthScale1` are a min-max pair    | There is no `birthScale1`. The `0` is a naming leftover, and randomisation comes from `probabilityTables`  |
+| `probabilityTables` picks one value from a set        | It multiplies `constantValue` by a random draw, once per particle                                          |
+| `birthOrbitalVelocity` adds orbital motion            | It is transform-only and contributes no velocity                                                           |
+| `miscRenderFlags` inverts faces                       | Bit `0` disables the depth test, inverted, so `1` means the test is off                                    |
+| `blendMode` meanings depend on the primitive          | The blend state is the same for every primitive. Only mode `3` writes depth                                |
+| `textureMult` is a filename                           | It is a pointer to a whole definition class. The filename is a field inside it                             |
+| `mEyeCandy` is an emitter setting                     | It is on the system                                                                                        |
+| A plain `scrollRate` exists                           | Only scoped variants exist, plus a legacy-only `uvScrollRate`                                              |
+| A soft-particle on-off field exists                   | A null `softParticleParams` pointer is the off switch                                                      |
+| `particleLifetime` of `-1` means an infinite particle | It means "live until the emitter stops". Only persistent when paired with `isSingleParticle`               |
+| An absent `particleLinger` is zero                    | It defaults to `particleLifetime + 10`                                                                     |
+| A child dies when its parent emitter's window closes  | A child is an independent system. It ends when its own emitters run out or its carrier particle is removed |
+
+---
+
+Names and types on this page were read from the engine's registered class layout for patch 16.16. If a property is missing or a description is wrong, it is worth fixing: see [How to contribute](/docs/lol/contributing).

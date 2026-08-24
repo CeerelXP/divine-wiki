@@ -1,0 +1,795 @@
+---
+title: "Bin & Particle Dictionary"
+description: "Tài liệu tra cứu các thuộc tính bên trong file bin VFX của League of Legends, sắp xếp theo class thực sự sở hữu từng thuộc tính."
+category: "vfx-bins"
+authors:
+  - name: DAKA
+    url: https://github.com/sxrmss
+---
+
+Mọi trang khác trong mục này dạy bạn _làm_ một việc gì đó. Trang này dành cho lúc bạn đang cuộn một bản dump `.py`, gặp một thuộc tính chưa từng thấy, và chỉ muốn biết nó là gì và nằm ở đâu.
+
+Các mục được nhóm theo **class sở hữu chúng**, vì trong một bin cùng một tên có thể xuất hiện ở nhiều class, và việc bạn đang ở trong class nào quyết định giá trị đó làm gì.
+
+<Callout type="info" title="Đọc cái này song song với Ruby">
+  Phần lớn các thuộc tính này hiểu nhanh hơn khi bạn nghịch chúng thay vì đọc về
+  chúng. [Ruby](/docs/lol/tools/modding-apps/ruby) xem trước VFX trên bất kỳ tướng
+  nào và có sẵn trình sửa bin bên trong, nên bạn có thể đổi một giá trị rồi nhìn
+  thẳng vào viewport thay vì đóng gói mod để xem nó làm gì.
+</Callout>
+
+<Callout type="info" title="Những tên này lấy từ đâu">
+  Mọi class, thuộc tính và kiểu trên trang này đều được đọc từ chính bố cục class
+  do engine đăng ký, đối chiếu với bản vá **16.16**. Những tên trường không còn
+  tồn tại đã bị loại bỏ, còn những tên nằm ở class khác với chỗ bạn tưởng thì được
+  ghi rõ chúng thực sự ở đâu. Một vài hành vi được ghi chú ở chỗ engine làm khác
+  với điều mà tên thuộc tính gợi ý.
+
+Bạn có thể tìm dữ liệu cấu trúc ở đây
+[lol-meta-classes](https://github.com/LeagueToolkit/lol-meta-classes). Bạn cũng có
+thể tìm tài liệu về các meta class và thuộc tính của chúng tại
+[lol-meta-wiki](https://meta-wiki.leaguetoolkit.dev/).
+
+</Callout>
+
+---
+
+## Cách đọc một file bin
+
+Một bin VFX là một cây. Xương sống của nó trông như sau:
+
+```
+VfxSystemDefinitionData              một hiệu ứng hoàn chỉnh, ví dụ recall hoặc chiêu Q
+└── complexEmitterDefinitionData     danh sách emitter mà system sở hữu
+    └── VfxEmitterDefinitionData     một emitter: một vệt, một tia sáng, vài tia lửa
+        ├── primitive                thứ mà mỗi hạt vẽ ra
+        └── các con trỏ *Definition  erosion, palette, distortion, con, ...
+```
+
+`VfxSystemDefinitionData` là vật chứa. Một thuộc tính không nằm trong system được phát trong lúc dùng kỹ năng sẽ không hiện ra trong lúc dùng kỹ năng đó.
+
+Emitter là nơi bạn tốn nhiều thời gian nhất. Riêng nó mang 135 trường đã đăng ký, và treo hơn chục đối tượng sub-definition tùy chọn qua các con trỏ. **Con trỏ rỗng nghĩa là cả tính năng đó bị tắt**, đó là lý do xóa hẳn một khối thường là cách đúng để tắt một thứ gì đó.
+
+### Các lớp bọc giá trị
+
+Thuộc tính số thường được bọc lại để engine có thể giữ chúng cố định hoặc cho chúng thay đổi:
+
+```rust
+rate: embed = ValueFloat {
+    constantValue: f32 = 20
+}
+```
+
+Các lớp bọc là `ValueFloat`, `ValueColor`, `ValueVector2` và `ValueVector3`. Mỗi cái giữ một `constantValue` cộng thêm một con trỏ `dynamics` tùy chọn. Đây là **hai trường riêng biệt, không phải hai cách viết của cùng một trường**: hằng số luôn có mặt, còn `dynamics` là một đối tượng phụ treo lên nó.
+
+| Khóa | Nằm ở | Nó là gì |
+| :--- | :---- | :------- |
+| `constantValue` | lớp bọc | Giá trị được ghi. Kiểu theo lớp bọc: `f32`, `vec4`, `vec2`, `vec3` |
+| `dynamics` | lớp bọc | Con trỏ tới đối tượng biến động. Rỗng nghĩa là dùng nguyên hằng số |
+| `times` | đối tượng dynamics | Các vị trí dọc theo đường cong |
+| `values` | đối tượng dynamics | Giá trị tại mỗi mục tương ứng trong `times` |
+| `probabilityTables` | đối tượng dynamics | Ngẫu nhiên hóa theo từng hạt. Xem bên dưới |
+
+<Callout type="warning" title="probabilityTables nhân lên, chứ không chọn">
+  Bảng xác suất thường bị hiểu là "chọn ngẫu nhiên một trong các giá trị này".
+  Không phải vậy. Mỗi bảng đưa một **lần bốc ngẫu nhiên đều** qua đường cong
+  `keyTimes` tới `keyValues` của chính nó rồi trả về một **hệ số nhân**, sau đó áp
+  vào `constantValue`. Lần bốc diễn ra **một lần cho mỗi hạt, lúc sinh ra**.
+
+Vậy `constantValue` bằng `5` với một bảng trả về khoảng `0.5` đến `1` sẽ cho mỗi
+hạt một giá trị nằm giữa `2.5` và `5`. Một bảng có `keyValues` vượt qua số không,
+ví dụ `-1` đến `1`, sẽ **đảo dấu** ở khoảng một nửa số hạt. Đó là lời giải thích
+quen thuộc cho hiệu ứng mà một số hạt trôi hoặc xoay ngược chiều với phần còn lại.
+
+Lưu ý rằng `keyTimes` trong bảng xác suất là **trục của lần bốc**, không phải tuổi
+của hạt.
+
+</Callout>
+
+### Thuộc tính lúc sinh và cặp đôi theo vòng đời
+
+Nhiều thuộc tính đi theo cặp. Cái có `birth*` được tính **một lần, khi hạt sinh ra**. Cái đi cùng không có tiền tố tiếp tục tác động **suốt vòng đời của hạt**, và được nhân với giá trị lúc sinh chứ không thay thế nó.
+
+| Lúc sinh | Suốt vòng đời |
+| :------- | :------------ |
+| `birthColor` | `Color` |
+| `birthScale0` | `scale0` |
+| `birthRotation0` | `rotation0` |
+| `birthVelocity` | `velocity` |
+| `birthAcceleration` | `acceleration` |
+| `birthDrag` | `drag` |
+
+Nếu một giá trị trông sai mà chỉ có một nửa của cặp được ghi, hãy kiểm tra nửa còn lại trước khi đổi bất cứ thứ gì.
+
+### Đơn vị
+
+Góc xoay và tốc độ xoay tính bằng **độ** và độ trên giây. Vòng đời, chu kỳ và độ trễ tính bằng **giây**. Tốc độ trôi UV tính bằng **UV trên giây**, còn xoay UV tính bằng độ. Các kênh màu chạy từ `0` đến `1`.
+
+### Ngẫu nhiên hóa và hậu tố `0`
+
+Vài thuộc tính lúc sinh kết thúc bằng `0`, như `birthScale0` và `birthRotation0`. Đó là tàn dư đặt tên, **không phải** cặp nhỏ nhất và lớn nhất. Không có `birthScale1` tương ứng trên class emitter hiện tại. Sự biến thiên theo từng hạt đến từ `probabilityTables`, như ở trên.
+
+### Các byte cờ
+
+Nhiều giá trị boolean không phải là trường riêng. Chúng là các bit đơn lẻ được đóng gói vào các byte cờ dùng chung trên emitter. Công cụ dạng văn bản hiển thị từng cái một dưới dạng `flag`, nên bạn viết lần lượt, nhưng chúng nằm bốn hoặc tám cái trong một byte. Danh sách đầy đủ ở [Cờ của emitter](#cờ-của-emitter).
+
+---
+
+## Cấp system
+
+`VfxSystemDefinitionData`, vật chứa ngoài cùng. 33 trường đã đăng ký tính đến bản vá 16.16.
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `particleName` | `string` | Tên dễ đọc của cả system. Đổi tên thoải mái, và đây là thứ đáng tin nhất để tìm khi hash của vật chứa chưa được giải |
+| `particlePath` | `string` | Nhóm đường dẫn mà engine dùng để sắp xếp các system |
+| `complexEmitterDefinitionData` | `list[embed]` | Các emitter mà system này sở hữu. Phần thân của hiệu ứng |
+| `simpleEmitterDefinitionData` | `list[embed]` | Danh sách emitter cũ hơn. Vẫn còn trong các system legacy |
+| `materialOverrideDefinitions` | `list[embed]` | Ghi đè material ở cấp system. Emitter có danh sách cùng tên của riêng nó |
+| `transform` | `mtx44` | Áp cho cả system, để phóng to, di chuyển và xoay toàn bộ như một khối. Xem [Matrix Scaling](/docs/lol/vfx-bins/matrix-scaling) |
+| `flags` | `u16` | Cờ bit ở cấp system. Hai cái đã biết: `0x100` chuyển vận tốc và drag sang lời giải dạng đóng, còn `0x800` là chế độ cấu hình thấp quyết liệt. Mặc định `212` |
+| `mEyeCandy` | `bool` | Đánh dấu system là hiệu ứng trang trí, nên nó biến mất khi người chơi bật Ẩn hiệu ứng trang trí |
+| `buildUpTime` | `f32` | Khoảng khởi động của system |
+| `visibilityRadius` | `f32` | Bán kính culling |
+| `overrideScaleCap` | `option[f32]` | Giới hạn mức phóng to tối đa của system |
+| `scaleDynamicallyWithAttachedBone` | `bool` | Tỉ lệ system bám theo xương mà nó gắn vào |
+| `objectPath` | `hash` | Định danh đường dẫn đối tượng. Thêm vào ở bản vá 16.16 |
+| `drawingLayer` | `u8` | System vẽ vào lớp nào |
+| `ClockToUse` | `u8` | Đồng hồ nào điều khiển thời gian của system |
+| `selfIllumination` | `f32` | Mức tự phát sáng |
+| `assetRemappingTable` | `list[embed]` | Các ánh xạ lại asset áp dụng trong system |
+| `soundOnCreateDefault` | `string` | Âm thanh phát khi system được tạo |
+| `voiceOverOnCreateDefault` | `string` | Lời thoại phát khi tạo |
+| `soundPersistentDefault` | `string` | Âm thanh lặp suốt vòng đời system |
+
+<Callout type="info" title="mEyeCandy là thuộc tính của system">
+  Nó nằm trên `VfxSystemDefinitionData` chứ không phải emitter, nên nó thuộc về
+  phần cấp system của khối chứ không nằm cạnh các thiết lập render của emitter.
+</Callout>
+
+---
+
+## Emitter: danh tính và vòng đời
+
+`VfxEmitterDefinitionData`. Mọi thứ từ đây đến [Cờ của emitter](#cờ-của-emitter) đều thuộc class này trừ khi một dòng nói khác.
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `emitterName` | `string` | Tên dễ đọc của một emitter. Đổi tên thoải mái, và rất nên làm |
+| `disabled` | `bool` | Tắt emitter mà không xóa nó |
+| `importance` | `u8` | Độ ưu tiên khi cắt bớt theo chất lượng, đối chiếu với thiết lập video Chất lượng hiệu ứng. Xem bảng bên dưới. Mặc định `2` |
+| `particleLifetime` | `ValueFloat` | Mỗi hạt sống bao lâu sau khi được phát ra. Mặc định `3.0` nếu vắng mặt. `-1` là giá trị canh, xem cảnh báo bên dưới |
+| `lifetime` | `option[f32]` | Bản thân emitter chạy bao lâu |
+| `particleLinger` | `option[f32]` | Số giây thêm mà các hạt còn hiện sau khi emitter kết thúc. Nếu vắng mặt thì mặc định là `particleLifetime + 10`, không phải không |
+| `emitterLinger` | `option[f32]` | Số giây thêm mà chính emitter còn nán lại |
+| `particleLingerType` | `u8` | Hành vi nán lại nào được dùng |
+| `Linger` | `pointer` | Một `VfxLingerDefinitionData`, cho kiểu nán lại có thay đổi hạt chứ không chỉ trì hoãn việc biến mất |
+| `flexParticleLifetime` | `pointer` | Ghi đè flex cho vòng đời hạt |
+
+<Callout type="warning" title="particleLifetime -1 mang hai nghĩa trái ngược">
+  `-1` **không** có nghĩa là "hạt vô hạn". Nó có nghĩa là "sống cho tới khi
+  emitter dừng", và điều đó cho ra kết quả gì thì phụ thuộc hoàn toàn vào
+  `isSingleParticle`.
+
+Khi bật `isSingleParticle`, phần giới hạn cửa sổ phát bị bỏ qua, nên cửa sổ không
+bị chặn, emitter không bao giờ kết thúc, và hạt **tồn tại vô thời hạn**. Đây là
+cách dựng một vật trang trí gắn vĩnh viễn.
+
+Không có `isSingleParticle`, nhánh giới hạn không bao giờ chạy và cửa sổ phát giữ
+nguyên ở `lifetime` đã ghi. Emitter dừng ở đó và mang theo các hạt của nó, nên một
+`-1` liên tục sẽ **biến mất** thay vì tồn tại tiếp.
+
+Một giá trị `9999` được ghi ra cũng hành xử y hệt `-1`.
+
+</Callout>
+
+### `importance` cắt bớt như thế nào
+
+`importance` được đối chiếu với thiết lập Chất lượng hiệu ứng của người chơi khi system dựng các emitter của nó. Đây là một hạng mục, không phải một thang đo, và hai trong số các giá trị hành xử khác với điều mà tên gọi gợi ý.
+
+| Chất lượng hiệu ứng | Các giá trị importance bị bỏ qua |
+| :------------------ | :------------------------------- |
+| 0 đến 1, Rất thấp và Thấp | `0`, `1`, `5` |
+| 2, Trung bình | `0`, `1` |
+| 3, Cao | `0`, `4` |
+| 4, Rất cao | `4` |
+
+Vậy `0` đến `3` tăng dần độ ưu tiên, và `3` là thiết yếu cho lối chơi nên không bao giờ bị cắt. `4` là **bản thay thế chất lượng thấp** chỉ hiện ở thiết lập thấp, còn `5` thì ngược lại, chỉ hiện từ Trung bình trở lên. Ghép một emitter `4` với một emitter `5` là cách một hiệu ứng xuất xưởng hai phiên bản của chính nó.
+
+Bốn thứ khác quyết định emitter có tồn tại hay không: `disabled`, `colorblindVisibility`, `ChanceToNotExist`, và bit `0x800` trong `flags` của system, vốn lược bỏ mọi thứ trừ importance `3` và `4`.
+
+`rate`, `lifetime`, `particleLifetime` và `particleLinger` được minh họa bằng ảnh chụp màn hình trên trang [Emitter Library](/docs/lol/assets-library/emitter-library).
+
+---
+
+## Emitter: phát và nhịp thời gian
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `rate` | `ValueFloat` | Số hạt phát ra mỗi giây. Trên emitter có `isSingleParticle` thì nó đặt **số lượng** hạt thay vì tốc độ |
+| `flexRate` | `pointer` | Ghi đè flex cho tốc độ |
+| `rateByVelocityFunction` | `ValueVector2` | Điều chỉnh tốc độ theo mức độ di chuyển nhanh chậm của emitter |
+| `MaximumRateByVelocity` | `option[f32]` | Giới hạn trên cho mục ở trên |
+| `timeBeforeFirstEmission` | `f32` | Độ trễ trước khi có gì đó sinh ra. Hữu ích để rải một system thành nhiều giai đoạn |
+| `period` | `option[f32]` | Độ dài một chu kỳ phát |
+| `timeActiveDuringPeriod` | `option[f32]` | Trong mỗi `period`, emitter thực sự phát trong bao lâu |
+| `ChanceToNotExist` | `f32` | Xác suất emitter bị bỏ qua hoàn toàn lúc sinh ra |
+| `SpawnShape` | `pointer` | Một `IVfxShape` cho biết khối không gian mà các hạt sinh ra bên trong |
+| `FlexShapeDefinition` | `pointer` | Biến thể flex của hình dạng sinh |
+| `emissionSurfaceDefinition` | `pointer` | Sinh ra trên một bề mặt thay vì trong một khối |
+| `emissionMeshName` | `string` | Một mesh dùng làm hình dạng phát |
+| `emissionMeshScale` | `f32` | Phóng to thu nhỏ mesh phát đó |
+
+<Callout
+  type="info"
+  title="period và timeActiveDuringPeriod là cách tạo loạt phát"
+>
+  Đặt `period` bằng độ dài chu kỳ và `timeActiveDuringPeriod` bằng một giá trị
+  ngắn hơn, emitter sẽ phát theo nhịp thay vì chạy liên tục. Để trống cả hai sẽ
+  cho một dòng đều đặn.
+</Callout>
+
+---
+
+## Emitter: vị trí và hướng
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `EmitterPosition` | `ValueVector3` | Các hạt sinh ra ở đâu so với gốc của emitter. Y dương là hướng lên |
+| `translationOverride` | `vec3` | Dịch chuyển cả emitter |
+| `rotationOverride` | `vec3` | Xoay cả emitter |
+| `scaleOverride` | `vec3` | Phóng to thu nhỏ cả emitter |
+| `FlexInstanceScale` | `pointer` | Ghi đè flex cho tỉ lệ của thực thể |
+| `bindWeight` | `ValueFloat` | Hạt bám theo thứ nó gắn vào tới mức nào. `1` bám hoàn toàn, `0` bỏ nó lại trong không gian thế giới |
+| `postRotateOrientationAxis` | `vec3` | Trục dùng khi bật `hasPostRotateOrientation` |
+| `offsetLifetimeScaling` | `vec3` | Điều chỉnh **vòng đời** của hạt theo khoảng cách nó sinh ra so với emitter, theo từng trục |
+| `offsetLifeScalingSymmetryMode` | `u8` | Chế độ đối xứng cho mục ở trên |
+
+<Callout type="info" title="EmitterPosition hay translationOverride?">
+  `EmitterPosition` dịch chỗ các hạt sinh ra bên trong emitter.
+  `translationOverride` dịch cả emitter. Nếu một emitter sai chỗ thì dùng cái thứ
+  hai; nếu các hạt sai chỗ bên trong một emitter vốn đã đúng thì dùng cái thứ nhất.
+</Callout>
+
+---
+
+## Emitter: thuộc tính lúc sinh
+
+Trạng thái mà hạt nhận được ngay khi sinh ra. Mọi thứ tên `birth*` đều là điều kiện ban đầu, không phải điều kiện liên tục.
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `birthColor` | `ValueColor` | Màu ban đầu, RGBA |
+| `birthScale0` | `ValueVector3` | Kích thước ban đầu |
+| `birthRotation0` | `ValueVector3` | Góc xoay ban đầu |
+| `birthRotationalVelocity0` | `ValueVector3` | Tốc độ quay ban đầu |
+| `birthRotationalAcceleration` | `ValueVector3` | Gia tốc quay ban đầu |
+| `birthVelocity` | `ValueVector3` | Vận tốc ban đầu |
+| `birthAcceleration` | `ValueVector3` | Gia tốc ban đầu |
+| `birthDrag` | `ValueVector3` | Drag ban đầu |
+| `birthOrbitalVelocity` | `ValueVector3` | Xoay quanh quỹ đạo. Xem cảnh báo bên dưới |
+| `birthFrameRate` | `ValueFloat` | Tốc độ phát ban đầu cho texture động |
+| `birthUVOffset` | `ValueVector2` | Độ lệch ban đầu trong texture. Hữu ích để làm lệch pha các hạt dùng chung một sheet |
+| `birthUvScrollRate` | `ValueVector2` | Tốc độ trôi UV ban đầu |
+| `birthUvRotateRate` | `ValueFloat` | Tốc độ xoay UV ban đầu |
+
+Mỗi cái đều có một người anh em `flex*` (`flexBirthVelocity`, `flexBirthUVOffset`, `flexScaleBirthScale` và tương tự) ghi đè nó khi có giá trị flex được cung cấp.
+
+<Callout type="warning" title="birthOrbitalVelocity không thêm vận tốc nào cả">
+  Dù mang cái tên đó, nó **không đóng góp gì vào vận tốc của hạt**. Nó chỉ liên
+  quan tới phép biến đổi: nó xoay ma trận riêng của hạt trong khi vị trí được lưu
+  vẫn tiếp tục tiến theo `birthVelocity` và các lực mà thôi.
+
+Điều này quan trọng nếu bạn đang suy luận về quãng đường một hạt đi được. Coi nó
+như vận tốc tiếp tuyến cộng thêm vào phép xoay sẽ đếm chuyển động hai lần và cho
+ra đúng gấp đôi chiều dài quãng đường.
+
+</Callout>
+
+---
+
+## Emitter: chuyển động theo vòng đời
+
+Trong khi `birth*` đặt trạng thái ban đầu, những cái này tiếp tục tác động.
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `velocity` | `ValueVector3` | Vận tốc suốt vòng đời của hạt |
+| `acceleration` | `ValueVector3` | Gia tốc suốt vòng đời |
+| `worldAcceleration` | `IntegratedValueVector3` | Gia tốc trong không gian thế giới bất kể hướng của hạt. Trọng lực nằm ở đây, dưới dạng Y âm |
+| `drag` | `ValueVector3` | Drag suốt vòng đời |
+| `scale0` | `ValueVector3` | Tỉ lệ suốt vòng đời, nhân với `birthScale0` |
+| `rotation0` | `IntegratedValueVector3` | Góc xoay suốt vòng đời |
+| `directionVelocityScale` | `f32` | Hạt kéo dài theo hướng di chuyển bao nhiêu khi tốc độ tăng. Dùng cùng `isDirectionOriented` |
+| `directionVelocityMinScale` | `f32` | Mức sàn của độ kéo dài đó |
+| `fieldCollectionDefinition` | `pointer` | Trường lực. Xem [Trường lực](#trường-lực) |
+
+---
+
+## Emitter: màu sắc
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `birthColor` | `ValueColor` | Màu lúc sinh ra |
+| `Color` | `ValueColor` | Màu suốt vòng đời của hạt, nhân với `birthColor`. Mặc định trắng |
+| `colorLookUpTypeX` / `colorLookUpTypeY` | `u8` | Thứ điều khiển từng trục khi tra `particleColorTexture`, ví dụ tuổi của hạt |
+| `colorLookUpScales` | `vec2` | Hệ số áp lên các tọa độ tra đó. Mặc định `1, 1` |
+| `colorLookUpOffsets` | `vec2` | Độ lệch áp lên các tọa độ tra đó |
+| `colorRenderFlags` | `u8` | Các cờ bit ảnh hưởng tới cách màu được áp lúc render |
+| `modulationFactor` | `vec4` | Điều biến áp lên màu cuối cùng |
+| `censorModulateValue` | `vec4` | Màu dùng khi nội dung bị kiểm duyệt cho một khu vực |
+| `paletteDefinition` | `pointer` | Một `VfxPaletteDefinitionData`. Xem [Palette](#palette) |
+| `colorblindVisibility` | `u8` | `0` luôn hiện, `1` chỉ ở chế độ thường, `2` chỉ ở chế độ mù màu |
+
+### Đọc một giá trị RGBA
+
+```rust
+birthColor: embed = ValueColor {
+    constantValue: vec4 = { 1, 0.7059, 0, 1 }
+}
+```
+
+Các kênh chạy từ `0` đến `1` chứ không phải `0` đến `255`. Để quy đổi, chia cho 255. Kênh xanh lá ở trên là `180`, và `180 / 255` cho ra `0.7059`.
+
+Giá trị thứ tư là alpha, trong đó **`0` là trong suốt hoàn toàn và `1` là đục hoàn toàn**.
+
+Để đổi màu trong thực tế, [Quartz](/docs/lol/tools/modding-apps/quartz) tính hộ bạn.
+
+---
+
+## Emitter: texture và UV
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `texture` | `string` | File `.dds` hoặc `.tex` mà emitter vẽ. Xem [File Formats](/docs/lol/vfx-bins/file-formats) |
+| `particleColorTexture` | `string` | Dải gradient được lấy mẫu để tô màu hạt, thường là theo vòng đời của chúng. Được nhắm bởi các trường `colorLookUp*` |
+| `falloffTexture` | `string` | Texture dốc suy giảm |
+| `textureMult` | `pointer` | Một `VfxTextureMultDefinitionData`, **không phải một chuỗi đơn thuần**. Xem [Texture mult](#texture-mult) |
+| `texDiv` | `vec2` | Chia texture thành lưới, dùng cho hoạt ảnh dạng sheet |
+| `startFrame` | `u16` | Khung đầu tiên của một sheet động |
+| `numFrames` | `u16` | Sheet chứa bao nhiêu khung |
+| `frameRate` | `f32` | Các khung đó chạy nhanh cỡ nào |
+| `uvMode` | `u8` | Cách tọa độ UV được diễn giải |
+| `texAddressModeBase` | `u8` | Lặp, clamp hay soi gương cho texture nền |
+| `uvRotation` | `ValueFloat` | Xoay texture |
+| `uvScale` | `ValueVector2` | Phóng to thu nhỏ texture |
+| `uvTransformCenter` | `vec2` | Tâm xoay cho phép xoay và phóng UV |
+| `uvParallaxScale` | `f32` | Mức thị sai trên UV |
+| `emitterUvScrollRate` | `vec2` | Tốc độ trôi áp theo emitter |
+| `particleUVScrollRate` | `IntegratedValueVector2` | Tốc độ trôi áp theo từng hạt |
+| `particleUVRotateRate` | `IntegratedValueFloat` | Tốc độ xoay áp theo từng hạt |
+| `isTexturePixelated` | `bool` | Lấy mẫu điểm gần nhất thay vì lọc mượt |
+
+<Callout type="info" title="Không có scrollRate đơn thuần">
+  Việc trôi luôn được giới hạn theo thứ mà nó tác động. Trên emitter hiện đại các
+  trường là `birthUvScrollRate`, `emitterUvScrollRate` và `particleUVScrollRate`.
+  Một `uvScrollRate` trần chỉ tồn tại trên class legacy được mô tả ở [Mô hình
+  component legacy](#mô-hình-component-legacy).
+</Callout>
+
+---
+
+## Emitter: trạng thái render
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `blendMode` | `u8` | Hạt hòa trộn với thứ phía sau nó ra sao. Bảng đầy đủ bên dưới |
+| `miscRenderFlags` | `u8` | Các bit trạng thái độ sâu và hòa trộn. Xem cảnh báo bên dưới |
+| `meshRenderFlags` | `u8` | Cờ render cho primitive dạng mesh |
+| `colorRenderFlags` | `u8` | Cờ render ảnh hưởng tới màu |
+| `pass` | `i16` | Thứ tự vẽ. Thấp hơn thì vẽ trước và nằm dưới |
+| `renderPhaseOverride` | `u8` | Ép emitter vào một pha render cụ thể. Mặc định `7`, tức là không ghi đè |
+| `depthBiasFactors` | `vec2` | Đẩy nhẹ độ sâu để các bề mặt đồng phẳng không tranh nhau |
+| `DepthPushPull` | `f32` | Đẩy hoặc kéo hạt dọc theo độ sâu. Mặc định `0`. Shader gọi nó là `PARTICLE_DEPTH_PUSH_PULL` |
+| `alphaRef` | `u8` | Ngưỡng kiểm tra alpha, `0` đến `255`. Pixel thấp hơn bị loại. Mặc định `5` |
+| `stencilMode` | `u8` | Hành vi stencil |
+| `stencilRef` | `u8` | Giá trị tham chiếu stencil |
+| `StencilReferenceId` | `hash` | Tham chiếu stencil có tên |
+| `disableBackfaceCull` | `bool` | Vẽ cả hai mặt của mỗi bề mặt |
+| `softParticleParams` | `pointer` | Một `VfxSoftParticleDefinitionData`. Xem [Soft particles](#soft-particles) |
+| `sliceTechniqueRange` | `f32` | Tầm của kỹ thuật slice |
+| `CustomMaterial` | `pointer` | Một `VfxMaterialDefinitionData` thay cho material mặc định |
+| `materialOverrideDefinitions` | `list[embed]` | Ghi đè theo từng material cho emitter này |
+| `Filtering` | `pointer` | Một `VfxEmitterFiltering`, kiểm soát nơi emitter được phép hiện |
+| `Audio` | `pointer` | Một `VfxEmitterAudio` |
+
+### Các giá trị blendMode
+
+Chúng cố định và giống nhau cho mọi primitive. Mỗi chế độ chọn một hệ số hòa trộn nguồn và đích cùng một phép hòa trộn.
+
+| Chế độ | Src | Dest | Phép | Ghi độ sâu | Hòa trộn |
+| :----- | :-- | :--- | :--- | :--------- | :------- |
+| `0` | ONE | ONE | ADD | không | có |
+| `1` | SRC_ALPHA | INV_SRC_ALPHA | ADD | không | có |
+| `2` | ZERO | INV_SRC_COLOR | ADD | không | có |
+| `3` | | | | **có** | **không** |
+| `4` | SRC_ALPHA | ONE | ADD | không | có |
+| `5` | ONE | INV_SRC_ALPHA | ADD | không | có |
+| `6` | ONE | ONE | MIN | không | có |
+| `7` | ONE | ONE | MAX | không | có |
+| `8` | INV_DEST_ALPHA | DEST_ALPHA | ADD | không | có |
+
+Đọc bảng đó trong thực tế:
+
+- `0` và `4` là các chế độ **cộng**. Màu đen không đóng góp gì, nên đây là những chế độ an toàn để đổi màu về phía đen.
+- `1` là **hòa trộn alpha** tiêu chuẩn, thứ gần nhất với cái gọi là "bình thường".
+- `2` **làm tối đi**, vì nó nhân với nghịch đảo của màu nguồn.
+- `3` là chế độ **đục**. Đây là chế độ duy nhất ghi độ sâu và cũng là chế độ duy nhất không hòa trộn gì cả.
+- `6` và `7` lấy **giá trị nhỏ nhất** hoặc **lớn nhất** giữa nguồn và đích thay vì cộng.
+
+<Callout type="warning" title="Bit 0 của miscRenderFlags tắt kiểm tra độ sâu, theo chiều ngược">
+  Bit `0` tương ứng với `DepthEnable` trong trạng thái depth-stencil, và nó
+  **đảo ngược**: khi bit được **bật**, kiểm tra độ sâu bị **tắt**. Đặt
+  `miscRenderFlags` bằng `1` chính là thứ khiến một hạt vẽ xuyên qua hình khối.
+
+Đây không phải cờ lật mặt, và cách hiểu rằng giá trị `4` tắt việc ghi độ sâu mà
+vẫn giữ phần kiểm tra là không đúng. Việc **ghi** độ sâu do `blendMode` quyết
+định, và chỉ chế độ `3` bật nó.
+
+Phép so sánh được dùng là `LESS_EQUAL` chứ không phải `LESS`, và đó là điều cho
+phép một decal đồng phẳng trên mặt đất hiện lên được.
+
+</Callout>
+
+---
+
+## Cờ của emitter
+
+Bốn byte trên emitter, mỗi byte mang tối đa tám bit có tên. Công cụ dạng văn bản hiển thị từng cái một dưới dạng `flag`.
+
+| Cờ | Nó làm gì |
+| :- | :-------- |
+| `TextureFlipU` / `TextureFlipV` | Lật gương texture theo từng trục |
+| `particleIsLocalOrientation` | Hướng của hạt được đọc trong không gian cục bộ |
+| `isLocalOrientation` | Hướng của emitter được đọc trong không gian cục bộ |
+| `isDirectionOriented` | Các hạt xoay theo hướng di chuyển của chúng |
+| `isUniformScale` | Tỉ lệ bị khóa về một giá trị duy nhất cho mọi trục |
+| `hasPostRotateOrientation` | Áp `postRotateOrientationAxis` sau khi xoay |
+| `isRandomStartFrame` | Mỗi hạt bắt đầu ở một khung ngẫu nhiên của sheet |
+| `doesCastShadow` | Emitter góp phần tạo bóng |
+| `isRotationEnabled` | Bật phép xoay nói chung |
+| `uvScrollClamp` | Clamp việc trôi UV thay vì cho lặp vòng |
+| `isFollowingTerrain` | Các hạt bám theo độ cao địa hình |
+| `isGroundLayer` | Vẽ như một lớp mặt đất |
+| `useEmissionMeshNormalForBirth` | Các hạt bay ra dọc theo pháp tuyến của mesh phát |
+| `useNavmeshMask` | Che hiệu ứng theo địa hình để nó không tràn qua tường |
+| `ParticlesShareRandomValue` | Mọi hạt bốc cùng một giá trị ngẫu nhiên |
+| `SortEmittersByPos` | Sắp xếp các emitter theo vị trí |
+| `IsEmitterSpace` | Các hạt được mô phỏng trong không gian emitter thay vì không gian thế giới |
+| `HasVariableStartTime` | Thời điểm bắt đầu khác nhau theo từng hạt |
+| `isSingleParticle` | Đúng một hạt thay vì một dòng liên tục |
+| `doesParticleLifetimeScale` | Vòng đời hạt co giãn theo system |
+| `doesLifetimeScale` | Vòng đời emitter co giãn theo system |
+| `WriteAlphaOnly` | Chỉ ghi kênh alpha |
+
+---
+
+## Primitive
+
+`primitive` là một con trỏ quyết định mỗi hạt vẽ ra cái gì. Để trống sẽ cho quad billboard hướng về camera mặc định.
+
+| Class | Nó vẽ gì |
+| :---- | :------- |
+| `VfxPrimitiveCameraQuad` | Một quad phẳng luôn hướng về camera. Mặc định, và là phần lớn các hạt bạn gặp |
+| `VfxPrimitiveCameraUnitQuad` | Một quad hướng về camera ở kích thước đơn vị |
+| `VfxPrimitiveArbitraryQuad` | Một quad có hướng cố định, không hướng về camera |
+| `VfxPrimitiveMesh` | Một mesh |
+| `VfxPrimitiveAttachedMesh` | Một mesh gắn vào xương. Thêm `UseAvatarSpecificSubmeshMask` |
+| `VfxPrimitiveCameraTrail` | Một vệt hướng về camera |
+| `VfxPrimitiveArbitraryTrail` | Một vệt có hướng cố định |
+| `VfxPrimitiveRibbon` | Một dải ruy băng |
+| `VfxPrimitiveBeam` | Một chùm nối hai điểm |
+| `VfxPrimitiveCameraSegmentBeam` | Một chùm chia đoạn hướng về camera |
+| `VfxPrimitiveCameraSegmentSeriesBeam` | Một chuỗi chùm chia đoạn |
+| `VfxPrimitiveLaser` | Một tia laser |
+| `VfxPrimitivePlanarProjection` | Chiếu texture lên một mặt phẳng. Decal trên mặt đất |
+| `VfxPrimitiveRay` | Một tia |
+| `VfxPrimitiveNonRenderable` | Không vẽ gì cả. Dùng cho các emitter chỉ tồn tại để sinh con hoặc chạy logic |
+
+### Các trường mesh
+
+Primitive dạng mesh mang một `VfxMeshDefinitionData` trong `mMesh`. Chú ý tiền tố `m`: chúng không viết giống các trường riêng của emitter.
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `mMeshName` | `string` | Mesh cần vẽ |
+| `mMeshSkeletonName` | `string` | Bộ xương cho mesh có hoạt ảnh |
+| `mSimpleMeshName` | `string` | Một mesh đơn giản `.scb` hoặc `.sco` |
+| `mSubmeshesToDraw` | `list[string]` | Những submesh nào được render |
+| `mSubmeshesToDrawAlways` | `list[string]` | Những submesh luôn được render |
+| `mLockMeshToAttachment` | `bool` | Khóa mesh vào điểm gắn của nó |
+| `mAnimationName` | `string` | Hoạt ảnh chạy trên mesh |
+| `mAnimationVariants` | `list[string]` | Các hoạt ảnh thay thế |
+
+Primitive dạng mesh cũng mang `AlignPitchToCamera` và `AlignYawToCamera` trên `VfxPrimitiveMeshBase`.
+
+### Các loại file mesh
+
+| Phần mở rộng | Nó là gì |
+| :----------- | :------- |
+| `.scb` | Mesh tĩnh, nhị phân |
+| `.sco` | Mesh tĩnh, văn bản ASCII, mang joint và material |
+| `.skn` | Mesh đã rig, chuẩn cho model tướng |
+| `.skl` | Bộ xương đi kèm với một `.skn` |
+
+Một cặp `.skn` và `.skl` trong thư mục particle nghĩa là một mesh có hoạt ảnh. Xem [Meshes as Particles](/docs/lol/vfx-bins/meshes-as-particles).
+
+### Vệt và ruy băng
+
+`VfxPrimitiveTrailBase` mang một `VfxTrailDefinitionData` trong `mTrail`:
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `mBirthTilingSize` | `ValueVector3` | Kích thước lát lúc sinh |
+| `mCutoff` | `f32` | Chiều dài cung mà tại đó vệt ngừng được kéo dài |
+| `mMaxAddedPerFrame` | `i32` | Giới hạn số điểm thêm vào mỗi khung hình |
+| `mSmoothingMode` | `u8` | Cách làm mượt dọc theo vệt |
+| `mMode` | `u8` | Chế độ của vệt |
+
+`VfxRibbonDefinitionData` mang `birthTilingSize` dưới dạng `ValueVector2`.
+
+---
+
+## Các class sub-definition
+
+Mỗi cái treo trên một con trỏ ở emitter. **Rỗng nghĩa là tính năng bị tắt hoàn toàn.**
+
+### Texture mult
+
+`VfxTextureMultDefinitionData`. Một texture thứ hai nhân lên trên texture nền, đúng ý tưởng của Multiply trong phần mềm chỉnh ảnh. Trường `textureMult` của emitter trỏ tới đối tượng này, còn tên file thật là chuỗi `textureMult` **nằm bên trong nó**.
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `textureMult` | `string` | Texture dùng để nhân |
+| `texDivMult` | `vec2` | Chia lưới cho texture nhân |
+| `texAddressModeMult` | `u8` | Chế độ lặp |
+| `uvScaleMult` | `ValueVector2` | Tỉ lệ trên UV của phần nhân |
+| `UvRotationMult` | `ValueFloat` | Xoay trên UV của phần nhân |
+| `uvTransformCenterMult` | `vec2` | Tâm cho phép xoay và phóng đó |
+| `birthUvScrollRateMult` | `ValueVector2` | Tốc độ trôi lúc sinh |
+| `emitterUvScrollRateMult` | `vec2` | Tốc độ trôi theo emitter |
+| `birthUVOffsetMult` | `ValueVector2` | Độ lệch UV ban đầu |
+| `birthUvRotateRateMult` | `ValueFloat` | Tốc độ xoay UV ban đầu |
+| `ParticleIntegratedUvScrollMult` | `IntegratedValueVector2` | Trôi theo từng hạt |
+| `ParticleIntegratedUvRotateMult` | `IntegratedValueFloat` | Xoay theo từng hạt |
+
+Byte cờ của nó mang `uvScrollAlphaMult`, `uvScrollClampMult`, `TextureMultFilpU`, `TextureMultFilpV` và `isRandomStartFrameMult`. Hai cái cuối đúng là được viết như vậy trong engine, nên hãy tìm "Filp" chứ đừng tìm "Flip" khi bạn đi lùng chúng.
+
+### Palette
+
+`VfxPaletteDefinitionData`. Tô màu hạt bằng cách lấy mẫu từ một texture gradient thay vì dùng một giá trị phẳng.
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `paletteTexture` | `string` | Ảnh gradient |
+| `PaletteTextureAddressMode` | `u8` | Chế độ lặp cho gradient |
+| `paletteSelector` | `ValueVector3` | Lấy mẫu ở chỗ nào trong bảng màu |
+| `palleteSrcMixColor` | `ValueColor` | Màu trộn với kết quả lấy mẫu |
+| `PaletteUAnimationCurve` | `ValueFloat` | Tạo hoạt ảnh cho tọa độ U |
+| `PaletteVAnimationCurve` | `ValueFloat` | Tạo hoạt ảnh cho tọa độ V |
+| `paletteCount` | `i32` | Số bảng màu trong texture |
+
+<Callout type="info" title="Palette hay Pallete?">
+  Class và hầu hết các trường dùng cách viết đúng. Lỗi chính tả của chính engine
+  chỉ sống sót ở đúng một trường, `palleteSrcMixColor`, nên tìm "pallete" trong một
+  bin sẽ bỏ sót gần như mọi thứ. Hãy tìm "palette".
+</Callout>
+
+### Erosion alpha
+
+`VfxAlphaErosionDefinitionData`. Hòa tan hạt bằng một map. Gần như mọi hiệu ứng cháy rụi hay xóa dần đều được dựng theo cách này.
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `erosionMapName` | `string` | Texture erosion |
+| `erosionMapAddressMode` | `u8` | Chế độ lặp cho map |
+| `erosionMapChannelMixer` | `ValueColor` | Những kênh nào của map được dùng, và dùng bao nhiêu |
+| `erosionDriveCurve` | `ValueFloat` | Quá trình erosion tiến triển ra sao |
+| `erosionDriveSource` | `u8` | Thứ điều khiển nó, ví dụ tuổi của hạt |
+| `erosionFeatherIn` / `erosionFeatherOut` | `f32` | Độ mềm ở mỗi mép của ranh giới |
+| `erosionSliceWidth` | `f32` | Bề rộng của dải đang bào mòn |
+| `LingerErosionDriveCurve` | `ValueFloat` | Một đường cong riêng dùng trong lúc nán lại |
+| `UseLingerErosionDriveCurve` | `bool` | Bật đường cong riêng đó |
+
+Map erosion thường ở dạng xám, trong đó màu trắng mòn trước và màu đen mòn sau cùng. Map nhiều kênh mang một hoa văn độc lập trên mỗi kênh màu, và `erosionMapChannelMixer` chọn giữa chúng.
+
+### Distortion
+
+`VfxDistortionDefinitionData`. Làm méo thứ được vẽ phía sau hạt. Sóng xung kích và gợn nhiệt.
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `normalMapTexture` | `string` | Normal map điều khiển phần méo |
+| `distortion` | `f32` | Cường độ |
+| `distortionMode` | `u8` | Chế độ distortion nào được dùng |
+
+### Phản chiếu và fresnel
+
+`VfxReflectionDefinitionData`. Khối viền sáng và phản chiếu. `fresnel` nằm ở đây, không phải trên emitter.
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `reflectionMapTexture` | `string` | Map phản chiếu |
+| `reflectionOpacityDirect` | `f32` | Cường độ phản chiếu khi nhìn thẳng |
+| `reflectionOpacityGlancing` | `f32` | Cường độ phản chiếu ở góc xiên |
+| `reflectionFresnel` | `f32` | Thành phần fresnel cho phản chiếu |
+| `reflectionFresnelColor` | `vec4` | Màu của thành phần đó |
+| `fresnel` | `f32` | Cường độ fresnel, viền sáng ở góc xiên |
+| `fresnelColor` | `vec4` | Màu của viền sáng đó |
+
+### Soft particles
+
+`VfxSoftParticleDefinitionData`. Làm mềm đường cắt gắt ở chỗ hạt cắt qua hình khối.
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `beginIn` | `f32` | Độ lệch trước khi bắt đầu mờ vào trong |
+| `beginOut` | `f32` | Độ lệch trước khi bắt đầu mờ ra ngoài |
+| `deltaIn` | `f32` | Quãng mà phần mờ vào trong bao phủ |
+| `deltaOut` | `f32` | Quãng mà phần mờ ra ngoài bao phủ |
+
+Còn một byte chế độ thứ năm chọn xem phần mờ nào trong hai phần được áp dụng. Một con trỏ `softParticleParams` rỗng sẽ tắt hẳn tính năng, và không có trường bật tắt riêng nào cả.
+
+### Linger
+
+`VfxLingerDefinitionData`. Thay đổi hạt trong giai đoạn nán lại thay vì chỉ trì hoãn việc xóa nó.
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `LingerRotation` | `ValueVector3` | Góc xoay áp trong lúc nán lại |
+| `LingerScale` | `ValueVector3` | Tỉ lệ áp trong lúc nán lại |
+| `KeyedLingerVelocity` | `ValueVector3` | Vận tốc trong lúc nán lại |
+| `KeyedLingerAcceleration` | `ValueVector3` | Gia tốc trong lúc nán lại |
+| `KeyedLingerDrag` | `ValueVector3` | Drag trong lúc nán lại |
+| `SeparateLingerColor` | `ValueColor` | Một màu khác trong lúc nán lại |
+
+Mỗi cái có một cờ `Use*` tương ứng: `UseLingerRotation`, `UseLingerScale`, `UseKeyedLingerVelocity`, `UseKeyedLingerAcceleration`, `UseKeyedLingerDrag` và `UseSeparateLingerColor`. Đặt giá trị mà không bật cờ thì chẳng có tác dụng gì.
+
+### Material và driver
+
+`VfxMaterialDefinitionData` giữ một liên kết `Material` và một map `materialDrivers`. Các driver tạo hoạt ảnh cho một tham số material thay vì giữ nó cố định.
+
+| Class | Nó làm gì |
+| :---- | :-------- |
+| `VfxColorOverLifeMaterialDriver` | Điều khiển một màu suốt vòng đời của hạt |
+| `VfxFloatOverLifeMaterialDriver` | Điều khiển một float đơn suốt vòng đời |
+| `VfxSineMaterialDriver` | Dao động một giá trị theo hình sin, để tạo nhịp |
+
+Về phần glow và toon shader, xem [Static Materials](/docs/lol/vfx-bins/static-materials).
+
+---
+
+## Trường lực
+
+`VfxFieldCollectionDefinitionData`, truy cập qua `fieldCollectionDefinition` của emitter. Trong khi `birthVelocity` đẩy một hạt vào chuyển động, một trường lực tiếp tục tác động lên nó.
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `fieldAccelerationDefinitions` | `list[embed]` | Gia tốc không đổi, ví dụ trọng lực |
+| `fieldAttractionDefinitions` | `list[embed]` | Kéo các hạt về một điểm |
+| `fieldDragDefinitions` | `list[embed]` | Làm chậm các hạt |
+| `fieldNoiseDefinitions` | `list[embed]` | Thêm nhiễu động |
+| `fieldOrbitalDefinitions` | `list[embed]` | Xoay các hạt quanh một trục |
+
+## Hình dạng phát
+
+`SpawnShape` trỏ tới một `IVfxShape`.
+
+| Class | Nó làm gì |
+| :---- | :-------- |
+| `VfxShapeSphere` | Sinh ra bên trong một hình cầu, với một `radius` |
+| `VfxShapeBox` | Sinh ra bên trong một hình hộp |
+| `VfxShapeCylinder` | Sinh ra bên trong một hình trụ |
+| `VfxShapeVolume` | Hành vi khối dùng chung, mang `flags` của riêng nó |
+| `VfxShapeLegacy` | Hệ hình dạng cũ hơn, vẫn còn trên nhiều hiệu ứng |
+
+`VfxEmissionMeshData` lo phần sinh ra từ một mesh, với `meshName`, `skeletonName`, `AnimationName`, `meshScale`, `maxJointWeights`, `Submeshes` và `useSurfaceNormalForBirthPhysics`.
+
+---
+
+## Hạt con
+
+`VfxChildParticleSetDefinitionData`, truy cập qua `childParticleSetDefinition` của emitter. Đây là cách một vệt bắn ra tia lửa hoặc một vụ nổ văng ra mảnh vỡ.
+
+| Thuộc tính | Kiểu | Nó làm gì |
+| :--------- | :--- | :-------- |
+| `childrenIdentifiers` | `list[embed]` | Các system con cần sinh ra, dưới dạng các mục `VfxChildIdentifier` |
+| `boneToSpawnAt` | `list[string]` | Các xương mà hạt con sinh ra trên đó |
+| `childrenProbability` | `ValueFloat` | Xác suất một hạt con được sinh ra |
+| `childEmitOnDeath` | `bool` | Sinh hạt con khi hạt cha chết chứ không phải khi nó sinh ra |
+| `ParentInheritanceDefinition` | `pointer` | Một `VfxParentInheritanceParams` quyết định hạt con thừa hưởng những gì |
+
+`VfxChildIdentifier` giữ `effect` (một liên kết), `effectKey` (một hash) và `effectName` (một chuỗi).
+
+`VfxParentInheritanceParams` giữ `Mode` và `RelativeOffset`. Độ lệch đó là một kênh tương đối so với hạt cha đúng nghĩa, tách biệt với `EmitterPosition` của chính hạt con.
+
+<Callout type="warning" title="Hạt con sinh ra một lần, lúc chào đời">
+  Không có luồng cấp liên tục từ cha sang con. Một system con được tạo **đúng một
+  lần, vào thời điểm hạt mang nó sinh ra**, và từ đó trở đi chạy như một system
+  độc lập theo đồng hồ riêng. Thứ duy nhất tháo dỡ nó là cái chết của hạt mang.
+
+Một hệ quả đáng biết: với một hạt mang có `isSingleParticle` thì có đúng một hạt
+và do đó đúng một lần tạo con, và việc cửa sổ phát của hạt cha đóng lại không thể
+ngăn điều đó.
+
+</Callout>
+
+<Callout type="info" title="Thừa hưởng là một mode, không phải chuỗi cố định">
+  Việc hạt con thừa hưởng gì từ hạt cha do giá trị `Mode` trên
+  `VfxParentInheritanceParams` quyết định. Khi không có `ParentInheritanceDefinition`
+  nào được ghi, hạt con chạy theo mode mặc định. Bất kỳ mô hình tư duy nào giả
+  định một tập cố định các thứ được thừa hưởng sẽ đúng với mặc định và sai với
+  phần còn lại.
+
+Các system con lồng nhau, và engine duyệt chúng theo chiều sâu trước, nên một tổ
+hợp lồng ba tầng sẽ hợp thành ở mọi tầng.
+
+</Callout>
+
+Một mẫu hay gặp là emitter cha dùng `VfxPrimitiveNonRenderable`: nó không vẽ gì cả và chỉ tồn tại để đặt vị trí cho các hạt con của nó.
+
+---
+
+## Mô hình component legacy
+
+Các hiệu ứng cũ hơn dùng một mô hình emitter thứ hai dựa trên component, vẫn còn đi kèm trong engine. Bạn sẽ gặp nó ở những tướng ra mắt đã lâu. Nó được ghi lại ở đây để bạn nhận ra nó, chứ không phải để bạn viết đồ mới bằng nó.
+
+| Class | Kích cỡ | Vai trò |
+| :---- | :------ | :------ |
+| `VfxEmitterLegacySimple` | 13 trường | Emitter legacy đơn giản, truy cập qua con trỏ `LegacySimple` của emitter |
+| `VfxLegacyRenderComponent` | 66 trường | Trạng thái render legacy |
+| `VfxLegacyPhysicsComponent` | 37 trường | Chuyển động và vị trí legacy |
+| `VfxLegacyLifetimeComponent` | 17 trường | Nhịp thời gian legacy |
+| `VfxLegacyGeometryComponent` | 1 trường | Hình học legacy |
+
+Nhiều tên xuất hiện ở cả hai mô hình. `blendMode`, `texture`, `bindWeight`, `birthVelocity`, `particleLifetime` và những cái khác tồn tại trên emitter hiện đại **và** trên một component legacy, ở các offset khác nhau. Khi một giá trị có vẻ không có tác dụng, hãy kiểm tra xem bạn đang thực sự sửa cái nào trong hai cái.
+
+Ba cái tên chỉ tồn tại **duy nhất** trên mô hình legacy:
+
+| Thuộc tính | Kiểu | Nằm ở |
+| :--------- | :--- | :---- |
+| `uvScrollRate` | `vec2` | `VfxEmitterLegacySimple` |
+| `particleBind` | `vec2` | `VfxEmitterLegacySimple` |
+| `lockedToEmitter` | `bool` | `VfxEmitterLegacySimple` |
+
+`VfxEmitterLegacySimple` cũng mang `birthScale`, `scale`, `birthRotation`, `birthRotationalVelocity`, `rotation`, `scaleBias`, `orientation`, `fixedOrbitType`, `hasFixedOrbit` và `scaleUpFromOrigin`. Chú ý `birthScale` và `birthRotation` không có hậu tố ở đây, đối lập với `birthScale0` và `birthRotation0` trên emitter hiện đại.
+
+Con trỏ `LegacySimple` chính là thứ mà các emitter trong danh sách `simpleEmitterDefinitionData` của system sử dụng. Nếu một system điền vào danh sách đó thay vì `complexEmitterDefinitionData`, thì đây là khối mà các emitter của nó đọc.
+
+### Những thuộc tính emitter đã mất
+
+Bốn thuộc tính của emitter đã bị loại bỏ và giờ chỉ còn xuất hiện trong các bin cũ hoặc tài liệu cũ.
+
+| Thuộc tính | Loại bỏ ở | Thay bằng |
+| :--------- | :-------- | :-------- |
+| `shape` | 14.1 | `SpawnShape` |
+| `Material` | 14.1 | `CustomMaterial` và `materialOverrideDefinitions` |
+| `materialDrivers` | 14.1 | Map `materialDrivers` trên `VfxMaterialDefinitionData` |
+| `flexOffset` | 15.11 | Không có thứ thay thế trực tiếp |
+
+`assetCategory` đã bị loại khỏi `VfxSystemDefinitionData` ở bản vá 14.15.
+
+---
+
+## Những chỗ dễ hiểu sai
+
+Một danh sách ngắn các cách hiểu sai tốn thời gian nhất.
+
+| Giả định | Sự thật là |
+| :------- | :--------- |
+| `birthScale0` và `birthScale1` là một cặp nhỏ nhất và lớn nhất | Không có `birthScale1`. Số `0` là tàn dư đặt tên, và tính ngẫu nhiên đến từ `probabilityTables` |
+| `probabilityTables` chọn một giá trị từ một tập | Nó nhân `constantValue` với một lần bốc ngẫu nhiên, một lần cho mỗi hạt |
+| `birthOrbitalVelocity` thêm chuyển động quỹ đạo | Nó chỉ liên quan tới phép biến đổi và không đóng góp vận tốc nào |
+| `miscRenderFlags` lật mặt | Bit `0` tắt kiểm tra độ sâu theo chiều ngược, nên `1` nghĩa là tắt kiểm tra |
+| Ý nghĩa của `blendMode` phụ thuộc vào primitive | Trạng thái hòa trộn giống nhau cho mọi primitive. Chỉ chế độ `3` ghi độ sâu |
+| `textureMult` là một tên file | Nó là con trỏ tới cả một class định nghĩa. Tên file là một trường bên trong nó |
+| `mEyeCandy` là thiết lập của emitter | Nó nằm trên system |
+| Có một `scrollRate` đơn thuần | Chỉ có các biến thể được giới hạn phạm vi, cộng thêm một `uvScrollRate` chỉ có ở legacy |
+| Có một trường bật tắt soft particle | Con trỏ `softParticleParams` rỗng chính là công tắc |
+| `particleLifetime` bằng `-1` nghĩa là hạt vô hạn | Nó nghĩa là "sống cho tới khi emitter dừng". Chỉ tồn tại lâu dài khi đi kèm `isSingleParticle` |
+| Thiếu `particleLinger` thì bằng không | Mặc định của nó là `particleLifetime + 10` |
+| Hạt con chết khi cửa sổ của emitter cha đóng lại | Hạt con là một system độc lập. Nó kết thúc khi các emitter của chính nó cạn hoặc khi hạt mang nó bị xóa |
+
+---
+
+Tên và kiểu trên trang này được đọc từ bố cục class do engine đăng ký cho bản vá 16.16. Nếu thiếu một thuộc tính hoặc một mô tả bị sai, rất đáng để sửa: xem [Cách đóng góp](/docs/lol/contributing).
