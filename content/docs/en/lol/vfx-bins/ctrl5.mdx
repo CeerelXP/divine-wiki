@@ -1,0 +1,135 @@
+<Callout type="info" title="CTRL+5 TOGGLE">
+ How to add toggle on Mods using only Jade
+</Callout>
+
+
+How to add CTRL+5 toggle like this <YouTube id="AeuXesgfyIc" title="What the video shows" />
+
+
+
+First of all make sure you have a initalsubmeshtohide Block in your bin, If you dont Add it in skinMeshProperties
+```bash
+initialSubmeshToHide: string = "Your material"
+```
+
+<img src="/wiki-images/screenshot-2026-08-25-104212.png" alt="" />
+
+
+After that is done, Go to AnimationGraphData and add the following code
+
+```bash
+      mCascadeBlendValue: f32 = 0
+            mClipDataMap: map[hash,pointer] = {
+                "Toggle" = ConditionBoolClipData {
+                    Updater: pointer = LogicDriverBoolParametricUpdater {
+                        driver: pointer = SubmeshVisibilityBoolDriver {
+                            Submeshes: list[hash] = {
+                                "Skirt"
+                            }
+                            VISIBLE: bool = false
+                        }
+                    }
+                    mTrueConditionClipName: hash = 0xbe8683f0
+                    mFalseConditionClipName: hash = 0x8aa48b13
+                }
+                0xbe8683f0 = ParallelClipData {
+                    mFlags: u32 = 14
+                    mClipNameList: list[hash] = {
+                        0x43191761
+                    }
+                }
+                0x43191761 = AtomicClipData {
+                    mFlags: u32 = 14
+                    mTrackDataName: hash = "Toggle"
+                    mMaskDataName: hash = "Default"
+                    mEventDataMap: map[hash,pointer] = {
+                        "Fade" = ParticleEventData {
+                            mEffectKey: hash = 0xcef6c126
+                            mParticleEventDataPairList: list[embed] = {
+                                ParticleEventDataPair {
+                                    mBoneName: hash = "C_Buffbone_GLB_Layout_Loc"
+                                }
+                            }
+                            mIsLoop: bool = false
+                            mIsKillEvent: bool = false
+                        }
+                        0x38503e10 = SubmeshVisibilityEventData {
+                            mShowSubmeshList: list[hash] = {
+                                "Skirt"
+                            }
+                            mHideSubmeshList: list[hash] = {
+                                0x8ba930d1
+                            }
+                        }
+                    }
+                    mAnimationResourceData: embed = AnimationResourceData {
+                        mAnimationFilePath: string = "ASSETS/cosmic/0/bum/Characters/camille/Skins/Base/Animations/camille_Taunt.anm"
+                    }
+                }
+                0x8aa48b13 = ParallelClipData {
+                    mFlags: u32 = 14
+                    mClipNameList: list[hash] = {
+                        0x04acc354
+                    }
+                }
+                0x04acc354 = AtomicClipData {
+                    mFlags: u32 = 14
+                    mTrackDataName: hash = "Toggle"
+                    mMaskDataName: hash = "Default"
+                    mEventDataMap: map[hash,pointer] = {
+                        "FadeOut" = ParticleEventData {
+                            mEffectKey: hash = 0xe271f27c
+                            mParticleEventDataPairList: list[embed] = {
+                                ParticleEventDataPair {
+                                    mBoneName: hash = "C_Buffbone_GLB_Layout_Loc"
+                                }
+                            }
+                            mIsLoop: bool = false
+                            mIsKillEvent: bool = false
+                        }
+                        "Hide_Mesh" = SubmeshVisibilityEventData {
+                            mHideSubmeshList: list[hash] = {
+                                "Skirt"
+                            }
+                            mShowSubmeshList: list[hash] = {
+                                0x8ba930d1
+                            }
+                        }
+                    }
+                    mAnimationResourceData: embed = AnimationResourceData {
+                        mAnimationFilePath: string = "ASSETS/cosmic/0/bum/Characters/camille/Skins/Base/Animations/camille_taunt.anm"
+                    }
+                }
+```
+
+
+
+
+
+
+
+Replace "skirt" With your material name in every instance
+
+<Callout type="info" IMPORTANT="IMPORTANT">
+DONT FORGET TO CHANGE THE ANIMATION PATH, YOU CNA MAKE IT ANY ANMATION ON THE CHAMP, BUT MAKE SURE ITS A VALID PATH OR ELSE THE GAME WILL CRASH/NOT WORK
+</Callout>
+
+
+After that go to mTrackDataMap
+
+
+
+And add this line of code Under Default
+
+```bash
+            }
+            "Toggle" = TrackData {
+                mPriority: u8 = 1
+            }
+        }
+        ```
+
+        So it should look something like this
+        <img src="/wiki-images/screenshot-2026-08-25-104813.png" alt="" />
+
+And thats it :P
