@@ -1,19 +1,19 @@
 ---
-title: "CTRL+5 Toggle"
-description: "Add a CTRL+5 submesh toggle to a League of Legends mod with Jade and an animation graph."
+title: "Bật Tắt bằng CTRL+5"
+description: "Thêm chức năng bật tắt submesh bằng CTRL+5 vào mod League of Legends với Jade và animation graph."
 category: "vfx-bins"
 ---
 
-<Callout type="info" title="CTRL+5 toggle">
-  Add a CTRL+5 toggle to a mod using only Jade.
+<Callout type="info" title="Bật tắt bằng CTRL+5">
+  Thêm chức năng bật tắt bằng CTRL+5 vào mod chỉ bằng Jade.
 </Callout>
 
-This guide shows how to add a CTRL+5 toggle like the one in this video:
+Hướng dẫn này sẽ chỉ bạn cách thêm chức năng bật tắt bằng CTRL+5 giống trong video sau:
 
-<YouTube id="AeuXesgfyIc" title="CTRL+5 toggle example" />
+<YouTube id="AeuXesgfyIc" title="Ví dụ bật tắt bằng CTRL+5" />
 
-First, add `initialSubmeshToHide` inside `skinMeshProperties`. Replace
-`YourSubmesh` with the submesh you want hidden by default.
+Đầu tiên, thêm `initialSubmeshToHide` vào `skinMeshProperties`. Thay
+`YourSubmesh` bằng submesh bạn muốn ẩn mặc định.
 
 ```py
 initialSubmeshToHide: string = "YourSubmesh"
@@ -21,12 +21,12 @@ initialSubmeshToHide: string = "YourSubmesh"
 
 <img
   src="/wiki-images/screenshot-2026-08-25-104212.png"
-  alt="initialSubmeshToHide set to Skirt inside skinMeshProperties"
+  alt="initialSubmeshToHide đặt thành Skirt trong skinMeshProperties"
 />
 
-In `AnimationGraphData`, add the following entries to `mClipDataMap`. The
-`mCascadeBlendValue` and `mClipDataMap` lines show where the entries belong.
-Do not create a second `mClipDataMap` if the field already exists.
+Trong `AnimationGraphData`, thêm các mục sau vào `mClipDataMap`. Hai dòng
+`mCascadeBlendValue` và `mClipDataMap` cho biết các mục cần nằm ở đâu. Đừng tạo
+`mClipDataMap` thứ hai nếu trường này đã có sẵn.
 
 ```py
       mCascadeBlendValue: f32 = 0
@@ -114,17 +114,17 @@ Do not create a second `mClipDataMap` if the field already exists.
             }
 ```
 
-Replace every `"Skirt"` string with the submesh you want to toggle. The sample
-also switches the submesh identified by `0x8ba930d1` in the opposite direction.
-Replace that hash with your second submesh's name or hash. Remove those entries
-if you only need to show and hide one submesh.
+Thay mọi chuỗi `"Skirt"` bằng submesh bạn muốn bật tắt. Ví dụ cũng bật tắt
+submesh có hash `0x8ba930d1` theo trạng thái ngược lại. Thay hash đó bằng tên
+hoặc hash của submesh thứ hai. Nếu bạn chỉ cần hiện và ẩn một submesh, hãy xóa
+các mục đó.
 
-<Callout type="warning" title="Use a valid animation path">
-  Change both `mAnimationFilePath` values to an animation that exists for your
-  champion. An invalid path can make the toggle fail or crash the game.
+<Callout type="warning" title="Dùng đường dẫn animation hợp lệ">
+  Đổi cả hai giá trị `mAnimationFilePath` thành một animation có thật của tướng.
+  Đường dẫn sai có thể làm chức năng bật tắt không chạy hoặc khiến game crash.
 </Callout>
 
-Finally, add this entry to `mTrackDataMap`:
+Cuối cùng, thêm mục này vào `mTrackDataMap`:
 
 ```py
 "Toggle" = TrackData {
@@ -132,11 +132,11 @@ Finally, add this entry to `mTrackDataMap`:
 }
 ```
 
-It should look like this:
+Nó sẽ trông như thế này:
 
 <img
   src="/wiki-images/screenshot-2026-08-25-104813.png"
-  alt="Toggle TrackData entry inside mTrackDataMap"
+  alt="Mục Toggle TrackData bên trong mTrackDataMap"
 />
 
-And that's it :P
+Vậy là xong :P

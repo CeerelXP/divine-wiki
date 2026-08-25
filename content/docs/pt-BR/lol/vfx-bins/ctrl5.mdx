@@ -1,19 +1,19 @@
 ---
-title: "CTRL+5 Toggle"
-description: "Add a CTRL+5 submesh toggle to a League of Legends mod with Jade and an animation graph."
+title: "Toggle com CTRL+5"
+description: "Adicione um toggle de submesh com CTRL+5 a um mod de League of Legends usando Jade e um animation graph."
 category: "vfx-bins"
 ---
 
-<Callout type="info" title="CTRL+5 toggle">
-  Add a CTRL+5 toggle to a mod using only Jade.
+<Callout type="info" title="Toggle com CTRL+5">
+  Adicione um toggle com CTRL+5 a um mod usando só o Jade.
 </Callout>
 
-This guide shows how to add a CTRL+5 toggle like the one in this video:
+Este guia mostra como adicionar um toggle com CTRL+5 como o deste vídeo:
 
-<YouTube id="AeuXesgfyIc" title="CTRL+5 toggle example" />
+<YouTube id="AeuXesgfyIc" title="Exemplo de toggle com CTRL+5" />
 
-First, add `initialSubmeshToHide` inside `skinMeshProperties`. Replace
-`YourSubmesh` with the submesh you want hidden by default.
+Primeiro, adicione `initialSubmeshToHide` dentro de `skinMeshProperties`. Troque
+`YourSubmesh` pela submesh que deve começar escondida.
 
 ```py
 initialSubmeshToHide: string = "YourSubmesh"
@@ -21,12 +21,12 @@ initialSubmeshToHide: string = "YourSubmesh"
 
 <img
   src="/wiki-images/screenshot-2026-08-25-104212.png"
-  alt="initialSubmeshToHide set to Skirt inside skinMeshProperties"
+  alt="initialSubmeshToHide definido como Skirt dentro de skinMeshProperties"
 />
 
-In `AnimationGraphData`, add the following entries to `mClipDataMap`. The
-`mCascadeBlendValue` and `mClipDataMap` lines show where the entries belong.
-Do not create a second `mClipDataMap` if the field already exists.
+Em `AnimationGraphData`, adicione as entradas abaixo ao `mClipDataMap`. As linhas
+`mCascadeBlendValue` e `mClipDataMap` mostram onde elas devem ficar. Não crie um
+segundo `mClipDataMap` se esse campo já existir.
 
 ```py
       mCascadeBlendValue: f32 = 0
@@ -114,17 +114,17 @@ Do not create a second `mClipDataMap` if the field already exists.
             }
 ```
 
-Replace every `"Skirt"` string with the submesh you want to toggle. The sample
-also switches the submesh identified by `0x8ba930d1` in the opposite direction.
-Replace that hash with your second submesh's name or hash. Remove those entries
-if you only need to show and hide one submesh.
+Troque todas as strings `"Skirt"` pela submesh que você quer mostrar e esconder. O
+exemplo também faz o inverso com a submesh identificada por `0x8ba930d1`. Troque
+esse hash pelo nome ou hash da sua segunda submesh. Remova essas entradas se você
+só precisa mostrar e esconder uma submesh.
 
-<Callout type="warning" title="Use a valid animation path">
-  Change both `mAnimationFilePath` values to an animation that exists for your
-  champion. An invalid path can make the toggle fail or crash the game.
+<Callout type="warning" title="Use um caminho de animação válido">
+  Troque os dois valores de `mAnimationFilePath` por uma animação que exista para
+  o seu campeão. Um caminho inválido pode fazer o toggle falhar ou o jogo crashar.
 </Callout>
 
-Finally, add this entry to `mTrackDataMap`:
+Por fim, adicione esta entrada ao `mTrackDataMap`:
 
 ```py
 "Toggle" = TrackData {
@@ -132,11 +132,11 @@ Finally, add this entry to `mTrackDataMap`:
 }
 ```
 
-It should look like this:
+Deve ficar assim:
 
 <img
   src="/wiki-images/screenshot-2026-08-25-104813.png"
-  alt="Toggle TrackData entry inside mTrackDataMap"
+  alt="Entrada TrackData de Toggle dentro de mTrackDataMap"
 />
 
-And that's it :P
+E é isso :P
