@@ -61,14 +61,18 @@ League splits audio into two separate files:
 
 Wwise's hierarchy is flat. Every element carries an `ID` and a `ParentID`. This makes it possible to inject new elements that attach themselves to existing parents in League's hierarchy without replacing the entire tree.
 
-### Keep Media and Events Split
+### Splitting Audio and Events in Custom Banks
 
-When generating SoundBanks, Wwise can bundle structure and media into a single bank. Splitting is optional, but if you merge events and media together, other modders can't inspect or replace your sounds in Quartz. To split, generate:
+When generating SoundBanks, Wwise can bundle structure and media into a single bank. You can optionally split the audio from the events and structure. Splitting lets others edit your custom banks later with [Quartz](/docs/lol/sounds/sound-easy).
 
-1. An `_events.bnk` holding the structure and event definitions.
-2. An `_audio.bnk` (or `.wpk`) holding media only.
+If you split, generate:
 
-If you don't split, put everything in `_events.bnk`.
+1. An `_audio.bnk` holding media only.
+2. An `_events.bnk` holding the structure and event definitions.
+
+If you don't split, generate:
+
+1. An `_events.bnk` holding the media, structure, and event definitions. In short, everything.
 
 ---
 
@@ -104,8 +108,8 @@ When balancing levels in Wwise, **adjust Make-up Gain rather than Voice Volume**
 Riot often applies a small random pitch change to repetitive actions so they feel natural (for example, Sett W cast variants or Grasp of the Undying procs):
 
 1. Select your container or sound object.
-2. Click the random (dice) icon next to **Pitch**.
-3. Set a range between `-50` and `+50` cents.
+2. Right-click the icon to the right of **Pitch**.
+3. Set a range, for example from `-100` to `+100` cents.
 
 ---
 
